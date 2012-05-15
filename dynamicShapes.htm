@@ -4,276 +4,77 @@
 <script src="loEngine.src.js"></script>
 <script type="application/javascript">
 
-/*
-	TODO	
-		Test custom shapes - ones not created with loMakeNArray()
-*/
-
-
+// Event class
 var loTick = loEngineEvents.create();
-
-
-// Various shapes to test
-
-// Confine cube within a circle of radius 50
-var cube	= loCreateHexagon( 300, 100, loConfine( 50 ) );
-// Unconfined rectangle (circle radius is not important)
-var rect	= loCreateRect( 100, 100, 50, 25 );
-var tri		= loCreateTri( 100, 300, loConfine( 50 ) );
-// Standard method of creating a polygon of n-sides
-var npoly	= loPolygon.create( 300, 300, loConfine( 50 ), loMakeNArray( 4 ) )
-
-var arr = [cube,rect,tri,npoly]
 
 // Light source placeholder
 var circle	= loCircle.create( 200, 200, 50 )
 circle.aniPos = 0
 
-// Circular shadow caster test
-var circle2	= loCircle.create( 350, 200, 20 )
 
-function keydownControl(e)
-{
-	
-}
+// Sample layer
+var layer_1 = loContainer.findLayer( "Layer 1" )
+
+function keydownControl(e){}
 
 function draw()
 {
-	var canvas = document.getElementById("canvas");
+	var canvas = document.getElementById("loDemo");
 	var ctx = canvas.getContext("2d");
 	
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.fillStyle = "#000";
-	// draw black background
-	/*
-	ctx.fillRect( 0, 0, canvas.width, canvas.height)
-	*/
-
-	// Project points from vertices
-	
-	
-	//arr = [rect]
-	var i = 0;
-	var srcCenter = loAsPoint( circle )
-
-	/*
-	var grd = ctx.createRadialGradient(
-		srcCenter.x,
-		srcCenter.y,
-		1,
-		srcCenter.x,
-		srcCenter.y,
-		circle.radius
-	);
-	
-	grd.addColorStop(0, "rgb(255,255,255)");
-	// dark blue
-	grd.addColorStop(1, "#000000");
-	
-	ctx.beginPath();
-	ctx.arc(
-		srcCenter.x,
-		srcCenter.y,
-		circle.radius,
-		0,
-		2*Math.PI,
-		false
-	)
-	
-	ctx.fillStyle = grd;
-	ctx.fill();
-	*/
-	
 	ctx.strokeStyle = "#000";
-	
-	while( i < arr.length )
-	{
-		var plyCenter = loAsPoint( arr[i] )
-		
-		var ps = []
-		
-		var j = 0;
-		while( j < arr[i].sides )
-		{
-			// Find the midpoint on the edge
-			var mp = arr[i].midat( j )
-			
-			// Make vector from shape center to midpoint
-			var v1 = loMakeVec2( plyCenter, mp )
-			
-			// Make vector from light source to midpoint
-			var v2 = loMakeVec2( srcCenter, mp )
 
-			// If the angle between these two vectors is less than 90deg
-			if( v1.angle( v2 ) < 90 )
-				// Add to a list of points which cast a shadow
-				ps.push( j )
-			
-			++j
-		}
-		
-		
-		/*
-			An attempt to draw the entire shadow as point polygon using lineTo
-			
-			It can be done, but my code doesn't quite work
-		*/
-		
-		/*
-		if( ps.length == 1 )
-		{
-		
-		}
-		else
-		{
-			var p1 = arr[i].at( ps[ 0 ] )
-			var v1 = loMakeVec2( srcCenter, p1 )
-			v1.normalize( 300 )
-			var p1e = p1.add( loPoint.create( v1.i, v1.j ) )
-			
-			ctx.fillStyle = "rgba(0,0,0,0.4)"
-			ctx.strokeStyle = "rgba(0,0,0,1)"
-			
-			ctx.beginPath()
-			ctx.moveTo( p1.x, p1.y );
-			ctx.lineTo( p1e.x, p1e.y );
-			
-			j = 1
-			while( j < ps.length )
-			{
-				var p2 = arr[i].at( ps[ j ]+1 )
-				var v2 = loMakeVec2( srcCenter, p2 )
-				v2.normalize( 300 )
-				var p2e = p2.add( loPoint.create( v2.i, v2.j ) )
-				
-				ctx.lineTo( p2e.x, p2e.y )
-				++j
-			}
-			
-			
-			ctx.lineTo( p2.x, p2.y )
-			ctx.lineTo( p1.x, p1.y )
-			ctx.fill()
-			ctx.stroke()
-
-		}
-		*/
-		j = 0;
-		while( j < ps.length )
-		{
-			var p1 = arr[i].at( ps[ j ] )
-			var p1e = loMakeVec2( srcCenter, p1 ).asPoint().project( p1, 300 )
-			
-			var p2 = arr[i].at( ps[ j ]+1 )
-			var p2e = loMakeVec2( srcCenter, p2 ).asPoint().project( p2, 300 )
-			
-			ctx.fillStyle = "rgba(0,0,0,1)"
-			ctx.strokeStyle = "rgba(0,0,0,0)"
-			
-			ctx.beginPath()
-			ctx.moveTo( p1e.x, p1e.y );
-			ctx.lineTo( p1.x, p1.y );
-			ctx.lineTo( p2.x, p2.y );
-			ctx.lineTo( p2e.x, p2e.y );
-			ctx.moveTo( p1e.x, p1e.y );
-			
-			ctx.fill();
-			ctx.stroke()
-		
-			++j
-		}
-		
-		
-		++i
-	}
+	// Draw the level (debug draw)
+	layer_1.render( ctx, true )
 	
-	// Draw each object - NOTE: debug drawings are not styled as requested
-	
-	i = 0;
-	while( i < arr.length )
-	{
-		loDrawDebug( ctx, arr[i] )
-		++i
-	}
-	
-	loDrawDebug( ctx, circle,	"rgba(50,50,200,0.4)" );
-	
-	var sh = circle2.shadowing( srcCenter )
-	
-	if( sh.length == 2 ) // else, it is empty
-	{
-		var p1 = sh[0].add( circle2 )
-		var p2 = sh[1].add( circle2 )
-
-		ctx.fillStyle = "rgb(0,0,0)"
-		ctx.strokeStyle = "rgb(200,0,0)"
-		
-		ctx.beginPath()
-//		ctx.moveTo( srcCenter.x, srcCenter.y )
-		ctx.moveTo( p1.x, p1.y )
-		
-		var v2 = loMakeVec2( srcCenter, p1 )
-		v2.normalize( 300 )
-		var p1e = p1.add( loPoint.create( v2.i, v2.j ) )
-		ctx.lineTo( p1e.x, p1e.y )
-		
-		var v2 = loMakeVec2( srcCenter, p2 )
-		v2.normalize( 300 )
-		var p2e = p2.add( loPoint.create( v2.i, v2.j ) )
-		//ctx.moveTo( p2e.x, p2e.y )
-		ctx.lineTo( p2e.x, p2e.y )
-		ctx.lineTo( p2.x, p2.y );
-		
-		ctx.fill()
-		ctx.stroke()
-	}
-	
-	
-	loDrawDebug( ctx, circle2,	"rgba(50,50,200,0.4)" );
-	
-	
-	/*
-	loDrawDebug( ctx, cube,		"rgba(200,200,0,0.5)" );
-	loDrawDebug( ctx, rect,		"rgba(200,0,200,0.5)" );
-	loDrawDebug( ctx, tri,		"rgba(0,200,200,0.5)" );
-	loDrawDebug( ctx, npoly,	"rgba(0,200,200,0.5)" );
-	*/
-	//loDraw( ctx, circle,	"rgba(50,50,200,0.4)" );
-	
-	// Do console
-	
-	
-	
+	// Draw the circle (debug draw)
+	loDrawDebug( ctx, circle, "rgba(50,50,200,0.4)" );
 	
 	var dbgConsole = document.getElementById('loDebugConsole')
-	dbgConsole.innerHTML = arr.join('<br>')
-	
-	//setTimeout("draw()", 100);
+	if( dbgConsole )
+	{
+		dbgConsole.innerHTML = "";
+		
+		layer_1.eachObj
+		(
+			function( loObj )
+			{
+				dbgConsole.innerHTML += loObj + "<br>"
+			}
+		)
+	}
 }
 
-window.onkeydown = keydownControl;
-
-function setup()
+function demoSetup()
 {
-	cvs = document.getElementById("canvas");
-	cvs.mouse = { x: 0, y: 0 };
+	cvs = document.getElementById("loDemo");
 	
-	cvs.addEventListener
-	(
-		'mousemove',
-		function(evt)
-		{
-			var mx = evt.offsetX || (evt.clientX - window.pageXOffset);
-			var my = evt.offsetY || (evt.clientY - window.pageYOffset);
+	window.onkeydown = keydownControl;
+	
+	// Create a circle
+	layer_1.push( loCircle.create( 350, 200, 20 ) )
+	
+	// Create a hexagon within a radius of 50 units
+	layer_1.push( loCreateHexagon( 300, 100, loConfine( 50 ) ) )
+	
+	// Also push multiple objects in an array
+	layer_1.push(
+		[
+			// Special case
+			loCreateRect( 100, 100, 50, 25 ),
 			
-			cvs = document.getElementById("canvas");
-			cvs.mouse = { x: mx, y: my };
-			//draw()
-		},
-		false
-	);
+			// Triangle, confined to specific radius
+			loCreateTri( 100, 300, loConfine( 50 ) ),
+			
+			// Longhand polygon creation
+			loPolygon.create( 300, 300, loConfine( 50 ), loMakeNArray( Math.random() * 8 +3 ) )
+		]
+	)
 	
 	// For demo: rotate circle around (200,200)
+	// NEW using optional firstTick flag
 	loTick.add(
 		6, 
 		function()
@@ -284,20 +85,25 @@ function setup()
 			circle.y = 200 + p.y
 		
 			circle.aniPos += 2
-		}
+		},
+		true
 	)
 	
-	// For demo: random rotatio
+	// For demo: random rotation
 	loTick.add(
 		5,
 		function()
 		{
-			var i = 0;
-			while( i < arr.length )
-			{
-				arr[i].rotate( arr[i].angle +2 )
-				++i
-			}
+			// Rotate each object
+			layer_1.eachObj
+			(
+				function( loObj )
+				{
+					// if not a circle
+					if( loObj.points )
+						loObj.rotate( loObj.angle +2 );
+				}
+			)
 		}
 	)
 	
@@ -318,11 +124,11 @@ function setup()
 
   </script>
  </head>
- <body onload="setup()">
+ <body onload="demoSetup()">
 	loEngine v0.4<br>
 	
 <hr>	
-   <canvas id="canvas" width="800" height="600">
+   <canvas id="loDemo" width="800" height="600">
 	Sorry, your browser doesn't support canvas technology
    </canvas>
    <div id='loDebugConsole'></div>

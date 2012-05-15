@@ -311,7 +311,7 @@ loPolygon.prototype =
 	},
 	rotate: function( deg )
 	{
-		this.angle = deg;
+		this.angle = deg % 360;
 		this.update();
 	}
 }
@@ -437,6 +437,7 @@ loConfine = function( r )
 */
 loMakeNArray = function( n )
 {
+	n = Math.abs( Math.round( n ) )
 	var tmp = []
 	var ang = 360 / n
 	var i = 0
@@ -639,64 +640,110 @@ loEachVert = function( loObj, from, func )
 	}
 }
 
-// v0.6
-//
 
-function loWorld() {} // made up of loLayers, indexable
+function loLayer() {}
+loLayer.prototype = 
+{
+	toString: function()
+	{
+		return "loLayer"
+	},
+	// Assign one or many objects to this layer
+	push: function( loObj )
+	{
+		if( loObj.constructor === Array )
+			this.objects = this.objects.concat( loObj )
+		else
+			this.objects.push( loObj )
+	},
+	// Render all objects (NOTE: you can only draw in debug)
+	render: function( ctx, debug )
+	{
+		var i = 0; var len = this.objects.length
+		while( i < len )
+		{
+			debug === true ? loDrawDebug( ctx, this.objects[i] ) : false
+			
+			// todo: set style in object
+			//loDraw( ctx, this.objects[i] )
+			++i
+		}
+	},
+	
+	eachObj: function( func )
+	{
+		var i = 0; var len = this.objects.length
+		while( i < len )
+		{
+			func( this.objects[ i ] )
+			++i
+		}
+	}
+}
+
+loLayer.create = function( x, y )
+{
+	var tmp = new loLayer()
+	tmp.pos = loPoint.create( x, y )
+	tmp.objects = new Array()
+	
+	return tmp
+}
+
+
+function loWorld() {}
 loWorld.prototype = 
 {
 	toString: function()
 	{
-		return "undefined"
+		return "loWorld=[layers: " + this.layers.length + "]"
 	},
-	addLayer: function( loL )
+	findLayer: function( lname )
 	{
-		// check layer name is not already in use, then
-		this.layers.push( loL )
+		var i = 0; var len = this.layers.length;
+		while( i < len )
+		{
+			if( this.layers[i].name == lname )
+				return this.getLayer( i )
+			++i
+		}
 	},
-	// Returns layer name
-	getLayer: function( i )
+	getLayer: function( index )
 	{
-		return this.layers[i].name
+		var tmp = this.layers[ index ]
+		if( tmp )
+			return tmp.layer
 	},
-	// Get a level by name
-	get: function( )
+	newLayer: function( name )
 	{
-	
+		this.layers.push(
+			{
+				id: this.nextid,
+				name: name,
+				layer: loLayer.create( 0, 0 )
+			}
+		)
+		++this.nextid
 	}
 }
-
-/*
-	TODO: Object containers:
-	
-	World [has] Layers [has] (loCircle or loPolygons) and lights (todo)
-*/
-
 
 loWorld.create = function()
 {
 	var tmp = new loWorld()
-	tmp.layers = []
+	tmp.nextid = 0
+	tmp.layers = new Array()
+	tmp.newLayer( "__lights" );
+	tmp.newLayer( "Layer 1" );
+
+	// push other stuff
+	
 	return tmp
 }
 
-/*
-	toString
-	clone
-	addPoly( loObj, z )  z index is important to rendering order
-	remPoly
-	getPoly
-*/
-
-function loLayer() {}
-loLayer.create = function( name )
-{
-	var tmp = new loLayer()
-	tmp.name = name
-	return tmp
-}
+var loContainer = loWorld.create();
 
 function loEngineEvents() {}
+
 
 loEngineEvents.prototype = 
 {
@@ -722,10 +769,17 @@ loEngineEvents.prototype =
 		me = this
 		this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
 	},
-	// Call function at specified time: NOTE: 100 is one second
-	add: function( tickat, tickfun )
+	// Call function at specified time
+	// NEW: optional firstTick flag
+	add: function( tickat, tickfun, firstTick )
 	{
-		this.elist.push({a: 0, t: tickat, f:tickfun})
+		this.elist.push(
+			{
+				a: firstTick === true ? tickat+1 : 0,
+				t: tickat,
+				f:tickfun
+			}
+		)
 	},
 	start: function( )
 	{
