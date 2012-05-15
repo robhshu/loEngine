@@ -9,6 +9,10 @@
 		Test custom shapes - ones not created with loMakeNArray()
 */
 
+
+var loTick = loEngineEvents.create();
+
+
 // Various shapes to test
 
 // Confine cube within a circle of radius 50
@@ -19,78 +23,22 @@ var tri		= loCreateTri( 100, 300, loConfine( 50 ) );
 // Standard method of creating a polygon of n-sides
 var npoly	= loPolygon.create( 300, 300, loConfine( 50 ), loMakeNArray( 4 ) )
 
-
-var randomly = []
+var arr = [cube,rect,tri,npoly]
 
 // Light source placeholder
 var circle	= loCircle.create( 200, 200, 50 )
+circle.aniPos = 0
 
 // Circular shadow caster test
-var circle2	= loCircle.create( 300, 214, 20 )
+var circle2	= loCircle.create( 350, 200, 20 )
 
-// REAL fumbling mess of tests
 function keydownControl(e)
 {
-	var ang = 0;
 	
-	if( e.keyCode == 39 )
-		ang += 2;
-	else
-	if( e.keyCode == 37 )
-		ang -= 2;
-	
-	var c = false;
-	
-	if( e.keyCode == 83 )
-	{
-		npoly.y += 10;
-		circle2.x += 10
-		c = true
-	}
-	else if( e.keyCode == 84 )
-	{
-		circle2.x -= 10
-		c = true
-	}
-	
-	if( e.keyCode == 188 )
-	{
-		rect.width += 1
-		rect.height += 1
-		rect.doResize()
-		c = true
-	}else if( e.keyCode == 190 )
-	{
-		rect.width -= 1
-		rect.height -= 1
-		rect.doResize()
-		c = true
-	}
-	
-	if( !( ang == 0 && c == false ) )
-	{
-		var arr = [cube,rect,tri,npoly]
-		
-		if( randomly.length > 0 ) arr = arr.concat( randomly )
-		
-		var i = 0;
-		while(i<arr.length)
-		{
-			arr[i].rotate( arr[i].angle+ang );
-			++i
-		}
-		
-		/*
-		cube.rotate( cube.angle + ang );
-		rect.rotate( rect.angle + ang );
-		tri.rotate( tri.angle + ang );
-		npoly.rotate( npoly.angle + ang );
-		*/
-		draw();
-	}
 }
 
-function draw() {
+function draw()
+{
 	var canvas = document.getElementById("canvas");
 	var ctx = canvas.getContext("2d");
 	
@@ -102,8 +50,7 @@ function draw() {
 	*/
 
 	// Project points from vertices
-	var arr = [cube,rect,tri,npoly]
-	//arr = arr.concat( randomly )
+	
 	
 	//arr = [rect]
 	var i = 0;
@@ -138,11 +85,6 @@ function draw() {
 	*/
 	
 	ctx.strokeStyle = "#000";
-	
-	
-	
-
-
 	
 	while( i < arr.length )
 	{
@@ -220,15 +162,11 @@ function draw() {
 		while( j < ps.length )
 		{
 			var p1 = arr[i].at( ps[ j ] )
-			var v1 = loMakeVec2( srcCenter, p1 )
-			v1.normalize( 300 )
-			var p1e = p1.add( loPoint.create( v1.i, v1.j ) )
+			var p1e = loMakeVec2( srcCenter, p1 ).asPoint().project( p1, 300 )
 			
 			var p2 = arr[i].at( ps[ j ]+1 )
-			var v2 = loMakeVec2( srcCenter, p2 )
-			v2.normalize( 300 )
-			var p2e = p2.add( loPoint.create( v2.i, v2.j ) )
-
+			var p2e = loMakeVec2( srcCenter, p2 ).asPoint().project( p2, 300 )
+			
 			ctx.fillStyle = "rgba(0,0,0,1)"
 			ctx.strokeStyle = "rgba(0,0,0,0)"
 			
@@ -262,7 +200,7 @@ function draw() {
 	
 	var sh = circle2.shadowing( srcCenter )
 	
-	if( sh.length == 4 ) // else, it is empty
+	if( sh.length == 2 ) // else, it is empty
 	{
 		var p1 = sh[0].add( circle2 )
 		var p2 = sh[1].add( circle2 )
@@ -278,17 +216,6 @@ function draw() {
 		v2.normalize( 300 )
 		var p1e = p1.add( loPoint.create( v2.i, v2.j ) )
 		ctx.lineTo( p1e.x, p1e.y )
-		
-//		ctx.stroke()
-		//ctx.beginPath()
-		
-		//ctx.stroke()
-
-		//ctx.beginPath()
-		//ctx.arc( circle2.x, circle2.y, 300, loAsRad( sh[2] ), loAsRad( sh[3] ), true );
-		//ctx.stroke()
-		
-		//ctx.beginPath()
 		
 		var v2 = loMakeVec2( srcCenter, p2 )
 		v2.normalize( 300 )
@@ -315,10 +242,13 @@ function draw() {
 	
 	// Do console
 	
-	/*
+	
+	
+	
 	var dbgConsole = document.getElementById('loDebugConsole')
 	dbgConsole.innerHTML = arr.join('<br>')
-	*/
+	
+	//setTimeout("draw()", 100);
 }
 
 window.onkeydown = keydownControl;
@@ -342,21 +272,48 @@ function setup()
 		},
 		false
 	);
-
 	
-	var i = Math.round( Math.random() * 10 ) +1 
-	while( i )
-	{
-		rx = Math.round( Math.random() * 600 )		// anywhere
-		ry = Math.round( Math.random() * 500 )		// anywhere
-		rs = Math.round( Math.random() * 25 ) + 25	// 25 to 50
-		rn = Math.round( Math.random() * 8 ) + 3	// 3 to 11
-		randomly.push( loPolygon.create( rx, ry, loConfine( rs ), loMakeNArray( rn ) ) )
-		--i
-	}
+	// For demo: rotate circle around (200,200)
+	loTick.add(
+		6, 
+		function()
+		{
+			var p = loPolygon.makeVertex( circle.aniPos, 50 )
+		
+			circle.x = 200 + p.x
+			circle.y = 200 + p.y
+		
+			circle.aniPos += 2
+		}
+	)
 	
-
-	draw();
+	// For demo: random rotatio
+	loTick.add(
+		5,
+		function()
+		{
+			var i = 0;
+			while( i < arr.length )
+			{
+				arr[i].rotate( arr[i].angle +2 )
+				++i
+			}
+		}
+	)
+	
+	/*
+		NOTE: scene renderer should be pushed last
+		also note that it only needs to tick as fast as the slowest ticker
+	*/
+	loTick.add(
+		5,
+		function()
+		{
+			draw();
+		}
+	)
+	
+	loTick.starti();
 }
 
   </script>
@@ -371,4 +328,6 @@ function setup()
    <div id='loDebugConsole'></div>
    <hr>
  </body>
+ 
 </html>
+

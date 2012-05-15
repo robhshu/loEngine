@@ -97,6 +97,10 @@ loVec2.prototype =
 		if( d == 0 ) return 90;
 		
 		return loAsDeg( Math.acos( d / ( this.length() * v.length() ) ) )
+	},
+	asPoint: function( )
+	{
+		return loPoint.create( this.i, this.j )
 	}
 }
 
@@ -193,6 +197,13 @@ loPoint.prototype =
 	length: function( )
 	{
 		return Math.sqrt( this.x*this.x + this.y*this.y )
+	},
+	project: function( loP, amm )
+	{
+		var tmp = this.copy()
+		tmp.normalize( amm )
+		tmp.addi( loP )
+		return tmp
 	}
 };
 
@@ -457,8 +468,6 @@ loCircle.prototype =
 	},
 	shadowing: function( loP )
 	{
-		// return (if any) points on 
-		
 		// get distance of O-P (hyp)
 		var d1 = loP.distance( loAsPoint( this ) )
 		
@@ -483,7 +492,7 @@ loCircle.prototype =
 		var v1 = loPolygon.makeVertex( -theta +aoff, this.radius )
 		var v2 = loPolygon.makeVertex( theta  +aoff, this.radius )
 //		alert( v )
-		return [v1,v2,-theta+aoff,theta+aoff]
+		return [ v1,v2 ]
 	}
 }
 
@@ -501,6 +510,11 @@ loCircle.create = function( x, y, radius )
 	return tmp;
 }
 
+// Consistent naming style
+loCreateCircle = function( x, y, radius )
+{
+	return loCircle.create( x, y, radius )
+}
 
 loDrawDebug = function( ctx, loObj )
 {
@@ -591,9 +605,8 @@ loDraw = function( ctx, loObj, style )
 	}
 	else
 	{
-		var p = loAsPoint( loObj );
-		p.addi( loObj.points[0] );
-
+		// Use member function to return the first static point
+		var p = loObj.at( 0 )
 		ctx.moveTo( p.x, p.y );
 		
 		loEachVert(
@@ -619,10 +632,9 @@ loDraw = function( ctx, loObj, style )
 loEachVert = function( loObj, from, func )
 {
 	var i = from;
-	var p = loAsPoint( loObj );
 	while( i < loObj.points.length )
 	{
-		func( p.add( loObj.points[i] ) );
+		func( loObj.at( i ) );
 		++i;
 	}
 }
@@ -683,3 +695,56 @@ loLayer.create = function( name )
 	tmp.name = name
 	return tmp
 }
+
+function loEngineEvents() {}
+
+loEngineEvents.prototype = 
+{
+	// worker function
+	_tick: function( )
+	{
+		var i = 0; var len = this.elist.length
+		while( i < len )
+		{
+			ele = this.elist[i]
+			
+			if( ele.a <= ele.t )
+				++ele.a;
+			else
+			{
+				ele.f()
+				ele.a = 0
+			}
+			
+			++i
+		}
+		
+		me = this
+		this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
+	},
+	// Call function at specified time: NOTE: 100 is one second
+	add: function( tickat, tickfun )
+	{
+		this.elist.push({a: 0, t: tickat, f:tickfun})
+	},
+	start: function( )
+	{
+		me = this
+		this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
+	},
+	starti: function( )
+	{
+		this._tick()
+	}
+}
+
+loEngineEvents.create = function()
+{
+	var tmp = new loEngineEvents()
+	
+	tmp.interval = 5
+	
+	tmp.elist = []	
+	return tmp
+}
+
