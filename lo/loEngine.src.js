@@ -341,7 +341,7 @@ loLayer.prototype =
 		var i = 0; var len = this.objects.length
 		while( i < len )
 		{
-			debug === true ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgba(0,0,0,0.5" )
+			debug === true ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgba(0,0,0,0.5)" )
 			++i
 		}
 	},
