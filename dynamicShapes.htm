@@ -59,18 +59,19 @@ function demoSetup()
 	layer_1.push( loCircle.create( 350, 200, 20 ) )
 	
 	// Create a hexagon within a radius of 50 units
-	layer_1.push( loCreateHexagon( 300, 100, loConfine( 50 ) ) )
+	layer_1.push( loCreateHexagon( 300, 100, 50 ) )
 	
 	// Also push multiple objects in an array
 	layer_1.push(
 		[
 			// Special case
-			loCreateRect( 100, 100, 50, 25 ),
+			loCreateRect( 100, 100, 50, 25, 50 ),
 			
 			// Triangle, confined to specific radius
-			loCreateTri( 100, 300, loConfine( 50 ) ),
+			loCreateTri( 100, 300, 50 ),
 			
 			// Longhand polygon creation
+			// NOTE: radius must now be confined.. (todo!)
 			loPolygon.create( 300, 300, loConfine( 50 ), loMakeNArray( Math.random() * 8 +3 ) )
 		]
 	)

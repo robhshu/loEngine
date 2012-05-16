@@ -5,6 +5,8 @@
 
 	info:
 		this engine uses cyclic polygons for ease of simple 2d transformations
+		NOTE: only regular polygons tested
+		
 		read more at: http://en.wikipedia.org/wiki/Cyclic_polygon
 */
 
@@ -13,10 +15,13 @@ loPolygon.prototype =
 {
 	toString: function()
 	{
-		return "loPolygon=[ x: " + this.x
-				+ ", y: " + this.y
-				+ ", sides: " + this.sides 
-				+ ", angle: " + Math.round(this.angle)
+		return "loPolygon=[ x: " 	+ loRound( this.x )
+				+ ", y: " 			+ loRound( this.y )
+				+ ", sides: " 		+ loRound( this.sides )
+				+ ", angle: " 		+ loRound( this.angle )
+				+ ", circumradius: "+ loRound( this.length )
+				+ ", apothem: " 	+ loRound( this.apothem() )
+				+ ", side length: " + loRound( this.sidelen() )
 				+ " ]";
 	},
 	// Return a vertex at given position
@@ -77,7 +82,7 @@ loPolygon.prototype =
 	doResize: function( )
 	{
 		//find the hyp
-		this.length = Math.sqrt( this.width*this.width+ this.height*this.height );
+		this.length = Math.sqrt( this.radius*this.radius*2 );
 	},
 	// Create the static points ( note: these points are not translated yet )
 	update: function()
@@ -101,6 +106,17 @@ loPolygon.prototype =
 	{
 		this.angle = deg % 360;
 		this.update();
+	},
+	apothem: function( )
+	{
+		// returns the radius of the inner-circle of a polygon
+		// this gives the radius to any midpoint
+		return this.length * Math.cos( loAsRad( 180 / this.sides ) )
+	},
+	sidelen: function( )
+	{
+		// returns the length of any side of a regular poly
+		return 2*this.length*Math.sin( loAsRad( 180 / this.sides ) )
 	}
 }
 
@@ -124,21 +140,13 @@ loPolygon.create = function( x, y, radius, angles )
 	{
 		var tmp = new loPolygon();
 	
+		// Centroid
 		tmp.x = x;
 		tmp.y = y;
+		// n-sided poly
 		tmp.sides = angles.length;
 		tmp.angles = angles;
-		
-		if( radius.constructor === Array )
-		{
-			tmp.width = radius[0];
-			tmp.height= radius[1];
-		}
-		else
-		{
-			tmp.width = tmp.height = radius;
-		}
-
+		tmp.radius = radius; // just using radius now
 		tmp.angle = 0;
 	
 		tmp.doResize();
@@ -166,43 +174,49 @@ loAsPoint = function( loObj )
 	return loPoint.create( loObj.x, loObj.y )
 }
 
-loCreateTri = function( x, y, radius )
+
+/*
+	0.6
+		These preset polygons functions now strictly use the radius as the circumradius
+*/
+loCreateTri = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, radius, loMakeNArray(3) );
+	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(3) );
 }
 
-loCreateSquare = function( x, y, radius )
+loCreateSquare = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, radius, loMakeNArray(4) );
+	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(4) );
 }
 
-loCreatePentagon = function( x, y, radius )
+loCreatePentagon = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, radius, loMakeNArray(5) );
+	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(5) );
 }
 
-loCreateHexagon = function( x, y, radius )
+loCreateHexagon = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, radius, loMakeNArray(6) );
+	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(6) );
 }
 
-loCreateRect = function( x, y, width, height, confine )
+/*
+	Rectangles are a special case in that the width/height is only really the
+	ratio between parallel sides
+*/
+loCreateRect = function( x, y, width, height, radius )
 {
-	var rsize = Math.sqrt( width*width + height*height );
+	// Sides are parallel, so this angle can be used to calculate the other four
+	var ah = loAsDeg( Math.atan( height/width ) )
 	
-	// for width, use cos, for height, use sin
-	var ah = loAsDeg( Math.acos( width / rsize ) )
-	
-	if( confine === true )
-	{
-		width = width / rsize * width
-		height = height/ rsize * height
-	}
-	
-	// todo: set angles in order of size
-	
-	return loPolygon.create( x, y, [width,height], loPrepAngles([ -ah, ah, 180-ah, 180+ah ]) );
+	return loPolygon.create( x, y, loConfine( radius ), loPrepAngles([ -ah, ah, 180-ah, 180+ah ]) )
 }
+
+
+/*
+// todo convert points to cyclic poly
+// todo try to create from quadrilateral points
+	// ( width*2 + height*2 ) * 0.5;
+*/
 
 /*
 	loConfine
@@ -213,7 +227,7 @@ loConfine = function( r )
 	if( r == 0 )
 		return 1
 
-	var len = Math.sqrt( r*r + r*r )
+	var len = Math.sqrt( r*r*2 )
 	return r / len * r
 }
 
