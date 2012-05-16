@@ -24,6 +24,15 @@ loAsRad = function( deg )
 }
 
 /*
+	loRound
+		Round a number to 3SF
+*/
+loRound = function( x )
+{
+	return Math.round( x * 1000 ) / 1000
+}
+
+/*
 	loVec2
 		2D vector class
 */
