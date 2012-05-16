@@ -16,6 +16,7 @@ loDraw = function( ctx, loObj, style )
 	
 	if( !loObj.points )
 	{
+		// TODO: circles do not use .pos yet
 		ctx.arc(
 			loObj.x,
 			loObj.y,
@@ -59,6 +60,8 @@ loDrawDebug = function( ctx, loObj )
 		// draw midpoints
 		ctx.strokeStyle = "rgb(100,100,100)";
 		ctx.beginPath();
+		
+		// TODO: circles do not use .pos yet
 		ctx.arc(
 			loObj.x,
 			loObj.y,
@@ -81,7 +84,7 @@ loDrawDebug = function( ctx, loObj )
 			// pass1
 			ctx.strokeStyle = "rgb(200,200,200)";
 			ctx.beginPath();
-			var c = loAsPoint( loObj );
+			var c = loObj.pos;
 			ctx.moveTo( c.x, c.y )
 			var a = loObj.midApprox( i )
 			ctx.lineTo( a.x, a.y )
@@ -90,9 +93,9 @@ loDrawDebug = function( ctx, loObj )
 			// pass2
 			ctx.strokeStyle = "rgb(100,100,100)";
 			ctx.beginPath();
-			var c = loAsPoint( loObj );
+			var c = loObj.pos;
 			ctx.moveTo( c.x, c.y )
-			var a = loObj.midat( i )
+			var a = loObj.midat2( i )
 			ctx.lineTo( a.x, a.y )
 			ctx.stroke();
 			
@@ -103,8 +106,8 @@ loDrawDebug = function( ctx, loObj )
 		ctx.strokeStyle = "rgb(200,200,200)";
 		ctx.beginPath();
 		ctx.arc(
-			loObj.x,
-			loObj.y,
+			loObj.pos.x,
+			loObj.pos.y,
 			loObj.length,
 			0,
 			2*Math.PI,

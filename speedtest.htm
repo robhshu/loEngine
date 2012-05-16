@@ -1,0 +1,70 @@
+<html>
+<head>
+<title>loEngine Speedtest</title>
+<script src="lo/loMath.src.js"></script>
+<script src="lo/loEngine.src.js"></script>
+<script src="lo/loEngineDisp.src.js"></script>
+<script type="application/javascript">
+
+$ = function(e){ return document.getElementsByName(e)[0] || document.getElementById(e) }
+
+function runTest()
+{
+	var sides = Math.round( Math.random() * 10 + 3 )
+	var poly = loPolygon.create
+	(
+		200,
+		200,
+		loConfine( 50 ),
+		loMakeNArray( sides )
+	)
+	
+	
+	var i = 0;
+	
+	var test1_start = new Date().getTime();
+	while( i < 100000 )
+	{
+		poly.midApprox( Math.round( Math.random() * sides ) )
+		++i;
+	}
+	var test1_end = new Date().getTime();
+	
+	i = 0
+	
+	var test2_start = new Date().getTime();
+	while( i < 100000 )
+	{
+		poly.midat2( Math.round( Math.random() * sides ) )
+		++i
+	}
+	var test2_end = new Date().getTime();
+	
+	i = 0
+	
+	var test3_start = new Date().getTime();
+	while( i < 100000 )
+	{
+		poly.midat( Math.round( Math.random() * sides ) )
+		++i
+	}
+	var test3_end = new Date().getTime();
+	
+	$('results').innerHTML = "Result<br>"
+		+ "midApprox(): " + ( test1_end-test1_start ) + "<br>"
+		+ "midat2(): " + ( test2_end-test2_start ) + "<br>"
+		+ "midat(): " + ( test3_end-test3_start ) + "<br>"
+		+ "<br><i>Test was run on a shape with " + sides + " sides</i>"
+}
+</script>
+
+</head>
+<body>
+
+	<a href="javascript:void( runTest() )">Run Test</a> (WARNING: may hang for a second)
+	<br>
+	<br>
+	<div name="results"></div>
+
+</body>
+</html>

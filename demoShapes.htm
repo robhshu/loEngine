@@ -134,7 +134,9 @@ function createRectangle()
 				</tr>
 				<tr>
 					<td>Sides</td>
-					<td><input type=text name="objSides" value="3" /> (3-n)</td>
+					<td><input type=text name="objSides" value="3" /> (3-n)
+					<a href="javascript:void( $('objSides').value=Math.round(Math.random()*10+3) );">random</a>
+					</td>
 				</tr>
 				<tr>
 					<td>Radius</td>

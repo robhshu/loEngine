@@ -15,8 +15,8 @@ loPolygon.prototype =
 {
 	toString: function()
 	{
-		return "loPolygon=[ x: " 	+ loRound( this.x )
-				+ ", y: " 			+ loRound( this.y )
+		return "loPolygon=[ x: " 	+ loRound( this.pos.x )
+				+ ", y: " 			+ loRound( this.pos.y )
 				+ ", sides: " 		+ loRound( this.sides )
 				+ ", angle: " 		+ loRound( this.angle )
 				+ ", circumradius: "+ loRound( this.length )
@@ -29,7 +29,7 @@ loPolygon.prototype =
 	{
 		i = ( i < this.sides && i >= 0 ? i : 0 )
 		
-		var p = loAsPoint( this )
+		var p = this.pos.copy()
 		p.addi( this.points[i] );
 		
 		return p;
@@ -57,8 +57,24 @@ loPolygon.prototype =
 			this.length
 		)
 		
-		return ret.add( loAsPoint( this ) )
+		return ret.add( this.pos )
 	
+	},
+	midat2: function( i )
+	{
+		// Calculate the angle (assuming the angles are even)
+		var ang = 360 / this.sides
+		var off = 90 - ( ang/2 )
+		
+		var angleat = (ang * (i+0.5)) + off
+		
+		var tmp = loPolygon.makeVertex
+		(
+			angleat + this.angle,
+			this.apothem()
+		)
+		
+		return tmp.add( this.pos )
 	},
 	// Return the midpoint which falls between 2 existing points
 	midat: function( i )
@@ -74,7 +90,7 @@ loPolygon.prototype =
 		pi.x /= 2
 		pi.y /= 2
 		pi.addi( pj )
-		pi.addi( loAsPoint( this ) )
+		pi.addi( this.pos )
 		
 		return( pi )
 	},
@@ -141,8 +157,7 @@ loPolygon.create = function( x, y, radius, angles )
 		var tmp = new loPolygon();
 	
 		// Centroid
-		tmp.x = x;
-		tmp.y = y;
+		tmp.pos = loPoint.create( x, y )
 		// n-sided poly
 		tmp.sides = angles.length;
 		tmp.angles = angles;
@@ -175,28 +190,33 @@ loAsPoint = function( loObj )
 }
 
 
+loCreatePoly = function( x, y, radius, sides )
+{
+	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(sides) );
+}
+
 /*
 	0.6
 		These preset polygons functions now strictly use the radius as the circumradius
 */
 loCreateTri = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(3) );
+	return loCreatePoly( x, y, radius, 3 );
 }
 
 loCreateSquare = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(4) );
+	return loCreatePoly( x, y, radius, 4 );
 }
 
 loCreatePentagon = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(5) );
+	return loCreatePoly( x, y, radius, 5 );
 }
 
 loCreateHexagon = function( x, y, radius, useout )
 {
-	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(6) );
+	return loCreatePoly( x, y, radius, 6 );
 }
 
 /*

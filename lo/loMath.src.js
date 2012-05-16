@@ -11,7 +11,7 @@
 */
 loAsDeg = function( rad )
 {
-	return( rad * 180/Math.PI );
+	return( rad * 57.2957795 );
 }
 
 /*
@@ -20,7 +20,7 @@ loAsDeg = function( rad )
 */
 loAsRad = function( deg )
 {
-	return( deg * Math.PI/180 );
+	return( deg * 0.0174532925 );
 }
 
 /*
