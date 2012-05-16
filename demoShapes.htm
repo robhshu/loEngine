@@ -1,0 +1,146 @@
+<html>
+<head>
+<title>loEngine Shape Demo</title>
+<script src="lo/loMath.src.js"></script>
+<script src="lo/loEngine.src.js"></script>
+<script src="lo/loEngineDisp.src.js"></script>
+<script type="application/javascript">
+
+$ = function(e){ return document.getElementsByName(e)[0] || document.getElementById(e) }
+
+// Event class
+var loTick = loEngineEvents.create();
+
+// Sample layer
+var layer_1 = loContainer.findLayer( "Layer 1" )
+
+function keydownControl(e){}
+
+function draw()
+{
+	var canvas = $('loDemo');
+	var ctx = canvas.getContext("2d");
+	
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = "#000";
+	ctx.strokeStyle = "#000";
+
+	layer_1.render( ctx, $('objDebug').checked )
+}
+
+function demoSetup()
+{
+	cvs = $('loDemo');
+	
+	loTick.add(
+		5,
+		function()
+		{
+			// Rotate each object
+			layer_1.eachObj
+			(
+				function( loObj )
+				{
+					if( $('objRotate').checked )
+					{
+						// if not a circle
+						if( loObj.points )
+							loObj.rotate( loObj.angle +2 );
+					}
+						
+					// there is only ONE object in here
+					$('loDebugInfo').innerHTML = loObj
+				}
+			)
+		}
+	)
+
+	loTick.add(
+		5,
+		function()
+		{
+			draw();
+		}
+	)
+	
+	recreateShapes()
+	
+	loTick.starti();
+}
+
+function recreateShapes()
+{
+	// from user options
+	
+	layer_1.clear();
+	
+	xpos = 200	// canvas.width/2
+	ypos = 200	// canvas.height/2
+	
+	layer_1.push
+	(
+		loPolygon.create
+		(
+			xpos,
+			ypos,
+			$('objCap').checked ? loConfine( $('objRadius').value ) : $('objRadius').value,
+			loMakeNArray( $('objSides').value )
+		)
+	)
+}
+
+  </script>
+ </head>
+<body onload="demoSetup()">
+	loEngine v0.4
+	<hr>
+
+	<div>
+		<div style="float: left">
+			<canvas id="loDemo" width="400" height="400">
+				Sorry, your browser doesn't support canvas technology
+			</canvas>
+		</div>
+		<div style="float:left">
+			<form>
+				<table>
+				<tr>
+				<td>Properties</td>
+				<td>
+					<label><input type=radio name="objType" checked/> Polygon</label><br>
+					<!--<label><input type=radio name="objType" /> Circle</label>-->
+				</td>
+				</tr>
+				<tr>
+					<td>Sides</td>
+					<td><input type=text name="objSides" value="3" /> (3-n)</td>
+				</tr>
+				<tr>
+					<td>Radius</td>
+					<td><input type=text name="objRadius" value="100" /></td>
+				</tr>
+				<tr>
+					<td>Cap Radius</td>
+					<td><label><input type=checkbox name="objCap" checked /> Confine</label></td>
+				</tr>
+				</table>
+				
+				<input type=button onClick="javascript:recreateShapes();" value="Generate">
+			</form>
+			
+			<p>
+				<label><input type=checkbox name="objDebug" checked /> Draw debug</label>
+				<label><input type=checkbox name="objRotate" /> Rotate shape</label>
+			</p>
+			
+			<div name='loDebugInfo'></div>
+			
+		</div>
+	</div>
+	<div style="clear:both"></div>
+	<hr>
+	
+</body>
+ 
+</html>
+
