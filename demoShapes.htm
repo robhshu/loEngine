@@ -11,19 +11,31 @@ $ = function(e){ return document.getElementsByName(e)[0] || document.getElementB
 // Event class
 var loTick = loEngineEvents.create();
 
-// Sample layer
-var layer_1 = loContainer.findLayer( "Layer 1" )
+// Create new layer
+var layer_1 = loContainer.newLayer( "Layer 1" )
 
+// Create a point light (note: this remains a reference to it)
+var myPointLight = loCreatePointLight( 0, 0 );
+
+// We want to make it dynamic, so assign an angle property
+myPointLight.angle = 0
+
+// Push the light to the container
 var lights = loContainer.findLayer( "__lights" )
-if( lights )
+if( lights ) lights.push( myPointLight )
+
+function updateMyLight()
 {
-	lights.push
-	(
-		loCreatePointLight( 0, 0 )
-	)
+	--myPointLight.angle
+
+	// Rotate around a radius of 200
+	var lightPos = loPolygon.makeVertex( myPointLight.angle, 200 )
+	
+	myPointLight.pos.x = 200 + lightPos.x
+	myPointLight.pos.y = 200 + lightPos.y
 }
 
-function keydownControl(e){}
+updateMyLight();
 
 function draw()
 {
@@ -31,10 +43,18 @@ function draw()
 	var ctx = canvas.getContext("2d");
 	
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
 	ctx.fillStyle = "#000";
 	ctx.strokeStyle = "#000";
 	
-	layer_1.render( ctx, $('objDebug').checked )
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	
+	loContainer.render( ctx, $('objDebug').checked )
+	
+	ctx.fillStyle = "#000";
+	ctx.beginPath();
+	ctx.fillRect( myPointLight.pos.x-1, myPointLight.pos.y-1, 2, 2 )
+	ctx.stroke()
 }
 
 function demoSetup()
@@ -45,20 +65,26 @@ function demoSetup()
 		5,
 		function()
 		{
+			// Rotate light source
+			if( $('objRotateLight').checked )
+			{
+				updateMyLight();
+			}
+		
 			// Rotate each object
-			layer_1.eachObj
-			(
-				function( loObj )
-				{
-					if( $('objRotate').checked )
+			if( $('objRotate').checked )
+			{
+				layer_1.eachObj
+				(
+					function( loObj )
 					{
 						loObj.rotate( loObj.angle +2 );
+							
+						// there is only ONE object in here
+						$('loDebugInfo').innerHTML = loObj
 					}
-						
-					// there is only ONE object in here
-					$('loDebugInfo').innerHTML = loObj
-				}
-			)
+				)
+			}
 		}
 	)
 
@@ -77,79 +103,56 @@ function demoSetup()
 
 function recreateShapes()
 {
-	// from user options
-	
 	layer_1.clear();
 	
-	xpos = 200	// canvas.width/2
-	ypos = 200	// canvas.height/2
-	
-	layer_1.push
+	tmp = loPolygon.create
 	(
-		loPolygon.create
-		(
-			xpos,
-			ypos,
-			$('objCap').checked ? loConfine( $('objRadius').value ) : $('objRadius').value,
-			loMakeNArray( $('objSides').value )
-		)
+		200,
+		200,
+		$('objRadius').value,
+		loMakeNArray( $('objSides').value )
 	)
+	
+	layer_1.push( tmp )
+	$('loDebugInfo').innerHTML = tmp
 }
 
 function createRectangle()
 {
 	layer_1.clear();
 	
-	xpos = 200
-	ypos = 200
-	
-	layer_1.push
+	tmp = loCreateRect
 	(
-		loCreateRect
-		(
-			xpos,
-			ypos,
-			$('objWidth').value,
-			$('objHeight').value,
-			$('objRadius').value
-		)
+		200,
+		200,
+		$('objWidth').value,
+		$('objHeight').value,
+		$('objRadius').value
 	)
+	
+	layer_1.push( tmp )
+	$('loDebugInfo').innerHTML = tmp
 }
 
 function createCircle()
 {
 	layer_1.clear();
 	
-	layer_1.push
+	tmp = loCreateCircle
 	(
-		loCreateCircle
-		(
-			200,
-			200,
-			$('objRadius').value
-		)
+		200,
+		200,
+		$('objRadius').value
 	)
+	
+	layer_1.push( tmp )
+	$('loDebugInfo').innerHTML = tmp
 }
 
-function createEllipse()
-{
-	layer_1.clear();
-	
-	layer_1.push
-	(
-		loCreateEllipse
-		(
-			200,
-			200,
-			$('objWidth').value,
-			$('objHeight').value
-		)
-	)
-}
   </script>
  </head>
 <body onload="demoSetup()">
-	loEngine v0.4
+	loEngine v0.5
 	<hr>
 
 	<div>
@@ -186,28 +189,22 @@ function createEllipse()
 						<input type=text name="objHeight" value="25" /> (h)
 					</td>
 				</tr>
-				<tr>
-					<td>Cap Radius</td>
-					<td><label><input type=checkbox name="objCap" checked /> Confine</label></td>
-				</tr>
 				</table>
 				
 				<input type=button onClick="javascript:recreateShapes();" value="Generate">
 				<input type=button onClick="javascript:createRectangle();" value="Generate Rectangle">
 				<input type=button onClick="javascript:createCircle();" value="Generate Circle">
-				<input type=button onClick="javascript:createEllipse();" value="Generate Ellipse">
 			</form>
 			
 			<p>
 				<label><input type=checkbox name="objDebug" checked /> Draw debug</label>
 				<label><input type=checkbox name="objRotate" /> Rotate shape</label>
+				<label><input type=checkbox name="objRotateLight" /> Rotate Light</label>
 			</p>
 			
-			<div name='loDebugInfo'></div>
+			<pre name='loDebugInfo'></pre>
 			
-			<br>
-			NOTE: loEngine needs to support both inner and outer circle shapes: 
-			http://mathworld.wolfram.com/Incircle.html
+			NOTE: loEngine only generates outer-circle polygons
 			
 		</div>
 	</div>

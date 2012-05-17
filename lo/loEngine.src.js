@@ -1,19 +1,13 @@
 /*
-	Light Object Engine (loEngine)
-	
-	Written by robhshu, May 2012
-
-	info:
-		this engine uses cyclic polygons for ease of simple 2d transformations
-		NOTE: only regular polygons tested
-		
-		read more at: http://en.wikipedia.org/wiki/Cyclic_polygon
+  Light Object Engine (loEngine)
+  
+  Written by robhshu, May 2012
 */
 
 function loEngine() {}
 loEngine.prototype = 
 {
-	toString: function(){}
+  toString: function(){}
 }
 
 loEngine.typePolygon = "__loPolygon";
@@ -24,554 +18,470 @@ loEngine.typeLPoint = "__loPointLight";
 loEngine.typeLDirectional = "__loDirLight";
 loEngine.typeLSpot = "__loSpotLight";
 
+/*****************   POLYGON CLASS   *****************/
+
 function loPolygon() {}
 loPolygon.prototype = 
 {
-	toString: function()
-	{
-		return this.type + "=[ x: " + loRound( this.pos.x )
-				+ ", y: " 			+ loRound( this.pos.y )
-				+ ", sides: " 		+ loRound( this.sides )
-				+ ", angle: " 		+ loRound( this.angle )
-				+ ", circumradius: "+ loRound( this.length )
-				+ ", apothem: " 	+ loRound( this.apothem() )
-				+ ", side length: " + loRound( this.sidelen() )
-				+ " ]";
-	},
-	// Return a vertex at given position
-	at: function( i )
-	{
-		i = ( i < this.sides && i >= 0 ? i : 0 )
-		
-		var p = this.pos.copy()
-		p.addi( this.points[i] );
-		
-		return p;
-	},
-	// Return angular midpoint (which falls on the container circumference)
-	// This is useful for calculating line normals
-	midApprox: function( i )
-	{
-		// cap value i
-		i = ( i < this.sides && i >= 0 ? i : 0 )
-		
-		var a1 = this.angles[ i ]
-		var a2 = this.angles[ ( i+1 < this.sides ? i+1 : 0 ) ]
-		
-		// bugfix for when a2 > a1
-		while( a1 > a2 )
-			a2 += 360
-		
-		// calculate the midpoint angle
-		var mida = a1 + ( ( a2 - a1 ) / 2 )
-		
-		var ret = loPolygon.makeVertex
-		(
-			mida + this.angle,
-			this.length
-		)
-		
-		return ret.add( this.pos )
-	
-	},
-	midat2: function( i )
-	{
-		// Calculate the angle (assuming the angles are even)
-		var ang = 360 / this.sides
-		var off = 90 - ( ang/2 )
-		
-		var angleat = (ang * (i+0.5)) + off
-		
-		var tmp = loPolygon.makeVertex
-		(
-			angleat + this.angle,
-			this.apothem()
-		)
-		
-		return tmp.add( this.pos )
-	},
-	// Return the midpoint which falls between 2 existing points
-	midat: function( i )
-	{
-		// more efficient than abs() and modulus
-		i = ( i < this.sides && i >= 0 ? i : 0 );
-		var j = ( i+1 < this.sides ? i+1 : 0 );
-		
-		var pi = this.points[i].copy()	// modified
-		var pj = this.points[j]			// not modified
-		
-		pi.subi( pj )
-		pi.x /= 2
-		pi.y /= 2
-		pi.addi( pj )
-		pi.addi( this.pos )
-		
-		return( pi )
-	},
-	// Update the values which use the size
-	doResize: function( )
-	{
-		//find the hyp
-		this.length = Math.sqrt( this.radius*this.radius*2 );
-	},
-	// Create the static points ( note: these points are not translated yet )
-	update: function()
-	{
-		this.points = [];
-		
-		var i = 0;
-		while( i < this.sides )
-		{
-			this.points.push(
-				loPolygon.makeVertex
-				(
-					this.angles[i] + this.angle,
-					this.length
-				)
-			)
-			++i;
-		}
-	},
-	rotate: function( deg )
-	{
-		this.angle = deg % 360;
-		this.update();
-	},
-	apothem: function( )
-	{
-		// returns the radius of the inner-circle of a polygon
-		// this gives the radius to any midpoint
-		return this.length * Math.cos( loAsRad( 180 / this.sides ) )
-	},
-	sidelen: function( )
-	{
-		// returns the length of any side of a regular poly
-		return 2*this.length*Math.sin( loAsRad( 180 / this.sides ) )
-	}
+  // Convert object to string
+  toString: function()
+  {
+    return [
+      "Type:",      this.type,
+      "\nPos:",     this.pos,
+      "\noRadius:", this.radius,
+      "\niRadius:", loRound( this.apothem() ),
+      "\nSides:",   this.sides,
+      "\nAngle:",   loRound( this.angle )
+      //loRound( this.sidelen() )
+    ].join(' ');
+  },
+  // Return a vertex at given position
+  at: function( i )
+  {   
+    var p = this.pos.copy()
+    p.addi( this.points[i%this.sides] );
+    
+    return p;
+  },
+  // Return angular midpoint (which falls on the container circumference)
+  // This is useful for calculating line normals
+  midApprox: function( i )
+  {
+    // Cap index and find angles
+    i %= 360
+    var a1 = this.angles[ i ]
+    var a2 = this.angles[ ( i+1 < this.sides ? i+1 : 0 ) ]
+    
+    // Ensure a2 is greater than a1
+    while( a1 > a2 )
+      a2 += 360
+    
+    // Find the midpoint angle
+    var mida = a1 + ( ( a2 - a1 ) / 2 )
+    
+    var ret = loPolygon.makeVertex
+    (
+      mida + this.angle,
+      this.radius
+    )
+    
+    return ret.add( this.pos )
+
+  },
+  midat2: function( i )
+  {
+    // Calculate the angle (assuming the angles are even)
+    var ang = 360 / this.sides
+    var off = 90 - ( ang/2 )
+    
+    var angleat = (ang * (i+0.5)) + off
+    
+    var tmp = loPolygon.makeVertex
+    (
+      angleat + this.angle,
+      this.apothem()
+    )
+    
+    return tmp.add( this.pos )
+  },
+  // Return the midpoint which falls between 2 existing points
+  midat: function( i )
+  {
+    // more efficient than abs() and modulus
+    i = ( i < this.sides && i >= 0 ? i : 0 );
+    var j = ( i+1 < this.sides ? i+1 : 0 );
+    
+    var pi = this.points[i].copy()  // modified
+    var pj = this.points[j]      // not modified
+    
+    pi.subi( pj )
+    pi.x /= 2
+    pi.y /= 2
+    pi.addi( pj )
+    pi.addi( this.pos )
+    
+    return( pi )
+  },
+  // Create the static points ( note: these points are not translated yet )
+  update: function()
+  {
+    this.points = [];
+    
+    var i = 0;
+    while( i < this.sides )
+    {
+      this.points.push(
+        loPolygon.makeVertex
+        (
+          this.angles[i] + this.angle,
+          this.radius
+        )
+      )
+      ++i;
+    }
+  },
+  rotate: function( deg )
+  {
+    this.angle = deg % 360;
+    this.update();
+  },
+  apothem: function( )
+  {
+    // returns the radius of the inner-circle of a polygon
+    // this gives the radius to any midpoint
+    return this.radius * Math.cos( loAsRad( 180 / this.sides ) )
+  },
+  sidelen: function( )
+  {
+    // returns the length of any side of a regular poly
+    return 2*this.radius*Math.sin( loAsRad( 180 / this.sides ) )
+  }
 }
 
 loPolygon.makeVertex = function( deg, length )
 {
-	var rad = loAsRad( deg )
-	
-	return loPoint.create(
-		Math.cos( rad ) * length,
-		Math.sin( rad ) * length
-	)
+  var rad = loAsRad( deg )
+  
+  return loPoint.create(
+    Math.cos( rad ) * length,
+    Math.sin( rad ) * length
+  )
 }
 
 /*
-	NOTE: angles are expected to be IN ORDER of size
-	If you are unsure, call loPrepAngles on the angles
+  NOTE: angles are expected to be IN ORDER of size
+  If you are unsure, call loPrepAngles on the angles
 */
 loPolygon.create = function( x, y, radius, angles )
 {
-	if( angles.length > 2 )
-	{
-		var tmp = new loPolygon();
-	
-		tmp.type = loEngine.typePolygon;
-		// Centroid
-		tmp.pos = loPoint.create( x, y )
-		// n-sided poly
-		tmp.sides = angles.length;
-		tmp.angles = angles;
-		tmp.radius = radius; // just using radius now
-		tmp.angle = 0;
-	
-		tmp.doResize();
-		tmp.update();
-	
-		return tmp;
-	}
+  if( angles.length > 2 )
+  {
+    var tmp = new loPolygon();
+  
+    tmp.type  = loEngine.typePolygon;
+    tmp.pos   = loPoint.create( x, y )
+    tmp.sides = angles.length;
+    tmp.angles= angles;
+    tmp.radius= radius;
+    tmp.angle = 0;
+  
+    tmp.update();
+  
+    return tmp;
+  }
 }
 
 /*
-	loPrepAngles
-		Ensure angles are in order of size - use this when you are unsure
+  loPrepAngles
+    Ensure an array of angles is in ascending order of size
 */
 loPrepAngles = function( arr )
 {
-	return arr.sort(function(a,b){return(a-b);})
+  return arr.sort(function(a,b){return(a-b);})
 }
 
 /*
-	loAsPoint
-		Get the loPoint of any lighting object instance
+  loAsPoint
+    Get the loPoint of any lighting object instance
 */
 loAsPoint = function( loObj )
 {
-	return loPoint.create( loObj.x, loObj.y )
+  return loPoint.create( loObj.x, loObj.y )
 }
 
-
+/*
+  loCreatePoly
+    Create an n-sided polypon
+*/
 loCreatePoly = function( x, y, radius, sides )
 {
-	return loPolygon.create( x, y, loConfine( radius ), loMakeNArray(sides) );
+  return loPolygon.create( x, y, radius, loMakeNArray( sides ) );
+}
+
+loCreateTri = function( x, y, radius )
+{
+  return loCreatePoly( x, y, radius, 3 );
+}
+
+loCreateSquare = function( x, y, radius )
+{
+  return loCreatePoly( x, y, radius, 4 );
+}
+
+loCreatePentagon = function( x, y, radius )
+{
+  return loCreatePoly( x, y, radius, 5 );
+}
+
+loCreateHexagon = function( x, y, radius )
+{
+  return loCreatePoly( x, y, radius, 6 );
 }
 
 /*
-	0.6
-		These preset polygons functions now strictly use the radius as the circumradius
-*/
-loCreateTri = function( x, y, radius, useout )
-{
-	return loCreatePoly( x, y, radius, 3 );
-}
-
-loCreateSquare = function( x, y, radius, useout )
-{
-	return loCreatePoly( x, y, radius, 4 );
-}
-
-loCreatePentagon = function( x, y, radius, useout )
-{
-	return loCreatePoly( x, y, radius, 5 );
-}
-
-loCreateHexagon = function( x, y, radius, useout )
-{
-	return loCreatePoly( x, y, radius, 6 );
-}
-
-/*
-	Rectangles are a special case in that the width/height is only really the
-	ratio between parallel sides
+  loCreateRect
+    Special case of polygon. Here, the width and height parameters are just ratios
 */
 loCreateRect = function( x, y, width, height, radius )
 {
-	// Sides are parallel, so this angle can be used to calculate the other four
-	var ah = loAsDeg( Math.atan( height/width ) )
-	
-	return loPolygon.create( x, y, loConfine( radius ), loPrepAngles([ -ah, ah, 180-ah, 180+ah ]) )
-}
-
-
-/*
-// todo convert points to cyclic poly
-// todo try to create from quadrilateral points
-	// ( width*2 + height*2 ) * 0.5;
-*/
-
-/*
-	loConfine
-		Limit the radius to the circular container
-*/
-loConfine = function( r )
-{
-	if( r == 0 )
-		return 1
-
-	var len = Math.sqrt( r*r*2 )
-	return r / len * r
+  var ah = loAsDeg( Math.atan( height/width ) )
+ 
+  return loPolygon.create( x, y, radius, loPrepAngles([ -ah, ah, 180-ah, 180+ah ]) )
 }
 
 /*
-	loMakeNArray
-		Create an array of angles for loPolygon creation
-		v0.3:
-			shape is rotated to offset the canvas orientation of 90deg
+  loMakeNArray
+    Create an array of offsetted angles for loPolygon creation
 */
 loMakeNArray = function( n )
 {
-	n = Math.abs( Math.round( n ) )
-	var tmp = []
-	var ang = 360 / n
-	var i = 0
-	var off = 90 - ( ang/2 )
-	
-	while( i < 360 )
-	{
-		tmp.push( i + off );
-		i += ang
-	}
-	
-	return tmp
+  n = Math.abs( Math.round( n ) )
+  var tmp = []
+  var ang = 360 / n
+  var off = 90 - ( ang/2 )
+  
+  var i = 0
+  while( i < 360 )
+  {
+    tmp.push( i + off );
+    i += ang
+  }
+  
+  return tmp
 }
+
+/*****************    CIRCLE CLASS    *****************/
 
 function loCircle() {}
 loCircle.prototype = 
 {
-	toString: function( )
-	{
-		return this.type + "=[ x: " + this.x + ", y: " + this.y + ", radius: " + this.radius + " ]";
-	},
-	doResize: function( )
-	{
-		
-	},
-	update: function( )
-	{
-	
-	},
-	rotate: function( deg )
-	{
-		// na
-	},
-	shadowing: function( loP )
-	{
-		// get distance of O-P (hyp)
-		var d1 = loP.distance( loAsPoint( this ) )
-		
-		// no shadowing
-		if( d1 < this.radius )
-		{
-			return []
-		}
-		// if distance < this.radius - ERROR!
-		
-		
-		// the dist of O-T == the radius (adj)
-		var d2 = this.radius
-		
-		// find the angle theta cos-1(a/h)
-		var theta = loAsDeg( Math.acos( d2/d1 ) )
-		
-		// find the angle between the 
-		var aoff = loAsDeg( loP.angle( loAsPoint( this ) ) )
-		
-		// create the new points with the known angles
-		var v1 = loPolygon.makeVertex( -theta +aoff, this.radius )
-		var v2 = loPolygon.makeVertex( theta  +aoff, this.radius )
-//		alert( v )
-		return [ v1,v2 ]
-	}
+  toString: function( )
+  {
+    return [
+      "Type:",      this.type,
+      "\nPos:",     this.pos,
+      "\nRadius:",  this.radius
+    ].join(' ');
+  },
+  update: function( )
+  {
+  
+  },
+  rotate: function( deg )
+  {
+    // na
+  },
+  shadowing: function( loP )
+  {
+    // get distance of O-P (hyp)
+    var d1 = loP.distance( this.pos )
+    
+    // no shadowing
+    if( d1 < this.radius )
+    {
+      return []
+    }
+    // if distance < this.radius - ERROR!
+    
+    
+    // the dist of O-T == the radius (adj)
+    var d2 = this.radius
+    
+    // find the angle theta cos-1(a/h)
+    var theta = loAsDeg( Math.acos( d2/d1 ) )
+    
+    // find the angle between the 
+    var aoff = loAsDeg( loP.angle( this.pos ) )
+    
+    // create the new points with the known angles
+    var v1 = loPolygon.makeVertex( -theta +aoff, this.radius )
+    var v2 = loPolygon.makeVertex( theta  +aoff, this.radius )
+//    alert( v )
+    return [ v1,v2 ]
+  }
 }
 
 loCircle.create = function( x, y, radius )
 {
-	var tmp = new loCircle();
-	
-	tmp.type = loEngine.typeCircle;
-	tmp.x = x;
-	tmp.y = y;
-	tmp.radius = radius;
-	tmp.angle = 0 // never rotated
-	
-	tmp.doResize();
-	tmp.update();
-	
-	return tmp;
+  var tmp = new loCircle();
+  
+  tmp.type = loEngine.typeCircle;
+  tmp.pos = loPoint.create( x, y )
+  tmp.radius = radius;
+  tmp.angle = 0 // never rotated
+  
+  tmp.update();
+  
+  return tmp;
 }
 
 // Consistent naming style
 loCreateCircle = function( x, y, radius )
 {
-	return loCircle.create( x, y, radius )
-}
-
-
-function loOval() {}
-loOval.prototype = 
-{
-	toString: function( )
-	{
-		return this.type + "=[ x: "+ this.x
-			+ ", y: " + this.y
-			+ ", width: " + this.width
-			+ ", height: " + this.height
-			+ ", angle: " + this.angle
-			+ " ]";
-	},
-	doResize: function( )
-	{
-		
-	},
-	update: function( )
-	{
-	
-	},
-	rotate: function( deg )
-	{
-		this.angle = deg % 360;
-		this.update()
-	}
-}
-
-loOval.create = function( x, y, width, height )
-{
-	var tmp = new loOval();
-	
-	tmp.type = loEngine.typeEllipse;
-	tmp.x = x;
-	tmp.y = y;
-	tmp.width = width;
-	tmp.height = height;
-	tmp.angle = 0;
-	
-	tmp.doResize();
-	tmp.update();
-	
-	return tmp;
-}
-
-loDrawOval = function( ctx, loObj )
-{
-	var r = loAsRad( loObj.angle )
-	var xrot = Math.sin( r )
-	var yrot = Math.cos( r )
-	
-	ctx.beginPath();
-	
-	// drawing 25 lines to form the oval
-	
-	for (var i = 0; i <= 6.2832; i += 0.251328 )
-	{
-		var a = ( loObj.width * Math.sin( i) )
-		var b = ( loObj.height * Math.cos( i ) )
-
-		//alert([a, b])
-		
-		xPos = loObj.x - a * xrot + b * yrot;
-		yPos = loObj.y + b * xrot + a * yrot;
-
-		( i == 0 ? ctx.moveTo(xPos, yPos) : ctx.lineTo(xPos, yPos) );
-	}
-	
-	ctx.stroke()
-}
-
-loCreateEllipse = function( x, y, width, height )
-{
-	if( width == height )
-		return loCreateCircle( x, y, width )
-	else
-	{
-		return loOval.create( x, y, width, height )
-	}
+  return loCircle.create( x, y, radius )
 }
 
 /*
-	loEachVert
-		Run anonymous function on vertices in a light object instance
+  loEachVert
+    Run anonymous function on vertices in a light object instance
 */
 loEachVert = function( loObj, from, func )
 {
-	var i = from;
-	while( i < loObj.points.length )
-	{
-		func( loObj.at( i ) );
-		++i;
-	}
+  var i = from;
+  while( i < loObj.points.length )
+  {
+    func( loObj.at( i ) );
+    ++i;
+  }
 }
 
 
 function loLayer() {}
 loLayer.prototype = 
 {
-	toString: function()
-	{
-		return "loLayer"
-	},
-	// Assign one or many objects to this layer
-	push: function( loObj )
-	{
-		if( loObj.constructor === Array )
-			this.objects = this.objects.concat( loObj )
-		else
-			this.objects.push( loObj )
-	},
-	// Render all objects (NOTE: you can only draw in debug)
-	render: function( ctx, debug )
-	{
-		var i = 0; var len = this.objects.length
-		while( i < len )
-		{
-			if( this.objects[i].type === loEngine.typeEllipse )
-			{
-				loDrawOval( ctx, this.objects[i] )
-			}
-			else //if( this.objects[i].type === loEngine.typePolygon )
-			{
-				debug === true ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgba(0,0,0,0.5)" )
-			}
-			++i
-		}
-	},
-	clear: function()
-	{
-		this.objects = new Array()
-	},
-	eachObj: function( func )
-	{
-		var i = 0; var len = this.objects.length
-		while( i < len )
-		{
-			func( this.objects[ i ] )
-			++i
-		}
-	}
+  toString: function()
+  {
+    return "loLayer"
+  },
+  // Assign one or many objects to this layer
+  push: function( loObj )
+  {
+    if( loObj.constructor === Array )
+      this.objects = this.objects.concat( loObj )
+    else
+      this.objects.push( loObj )
+  },
+  // Render all objects (NOTE: you can only draw in debug)
+  render: function( ctx, debug, shadow )
+  {
+    var i = 0; var len = this.objects.length
+    while( i < len )
+    {
+      if( this.objects[i].type === loEngine.typePolygon )
+      {
+        if( shadow.type === loEngine.typeLPoint )
+          loDrawShadow( ctx, this.objects[i], shadow.pos )
+      
+        debug ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgb(100,10,0)" );
+      }
+      else
+      {
+        // i.e circle
+        loDrawDebug( ctx, this.objects[i] );
+      }
+      ++i
+    }
+  },
+  clear: function()
+  {
+    this.objects = new Array()
+  },
+  eachObj: function( func )
+  {
+    var i = 0; var len = this.objects.length
+    while( i < len )
+    {
+      func( this.objects[ i ] )
+      ++i
+    }
+  }
 }
 
 loLayer.create = function( x, y )
 {
-	var tmp = new loLayer()
-	tmp.pos = loPoint.create( x, y )
-	tmp.objects = new Array()
-	
-	return tmp
+  var tmp = new loLayer()
+  tmp.pos = loPoint.create( x, y )
+  tmp.objects = new Array()
+  
+  return tmp
 }
 
 
 function loWorld() {}
 loWorld.prototype = 
 {
-	toString: function()
-	{
-		return "loWorld=[layers: " + this.layers.length + "]"
-	},
-	findLayer: function( lname )
-	{
-		var i = 0; var len = this.layers.length;
-		while( i < len )
-		{
-			if( this.layers[i].name == lname )
-				return this.getLayer( i )
-			++i
-		}
-	},
-	getLayer: function( index )
-	{
-		var tmp = this.layers[ index ]
-		if( tmp )
-			return tmp.layer
-	},
-	newLayer: function( name )
-	{
-		this.layers.push(
-			{
-				id: this.nextid,
-				name: name,
-				layer: loLayer.create( 0, 0 )
-			}
-		)
-		++this.nextid
-	}
-	/*,
-	// Render all the layers with the __lights layer
-	render: function()
-	{
-		var i = 1; var len = this.layers.length;
-		while( i < len )
-		{
-		
-		
-		}
-	}
-	*/
+  toString: function()
+  {
+    return "loWorld=[layers: " + this.layers.length + "]"
+  },
+  findLayer: function( lname )
+  {
+    var i = 0; var len = this.layers.length;
+    while( i < len )
+    {
+      if( this.layers[i].name == lname )
+        return this.getLayer( i )
+      ++i
+    }
+  },
+  getLayer: function( index )
+  {
+    var tmp = this.layers[ index ]
+    if( tmp )
+      return tmp.layer
+  },
+  newLayer: function( name )
+  {
+    var tmp = loLayer.create( 0, 0 )
+    this.layers.push(
+      {
+        id: this.nextid,
+        name: name,
+        layer: tmp
+      }
+    )
+    ++this.nextid
+    return tmp
+  },
+  // Render each layer
+  render: function( ctx, debug )
+  {
+    // Any layers?
+    if( this.layers.length > 0 )
+    {
+      var lFirst = this.layers[0]
+     
+      // Check the first layer contains lights
+      if( lFirst.name === "__lights" )
+      {
+        if( lFirst.layer.objects.length > 0 )
+        {
+          var lightObj = lFirst.layer.objects[0];
+          
+          loDrawLight( ctx, lightObj.pos )
+          
+          var i = 1;
+          while( i < this.layers.length )
+          {
+            this.layers[i].layer.render( ctx, debug, lightObj )
+            ++i
+          }
+        }
+        else
+        {
+          throw 'Lighting layer contains no lights';
+        }
+      }
+      // Else, just render it
+      else
+      {
+        lFirst.layer.render( ctx, debug )
+      }
+    }
+  }
 }
 
 loWorld.create = function()
 {
-	var tmp = new loWorld()
-	tmp.nextid = 0
-	tmp.layers = new Array()
-	tmp.newLayer( "__lights" );
-	tmp.newLayer( "Layer 1" );
+  var tmp = new loWorld()
+  tmp.nextid = 0
+  tmp.layers = new Array()
+  tmp.newLayer( "__lights" );
 
-	// push other stuff
-	
-	return tmp
+  // push other stuff
+  
+  return tmp
 }
 
 var loContainer = loWorld.create();
@@ -581,80 +491,80 @@ function loEngineEvents() {}
 
 loEngineEvents.prototype = 
 {
-	// worker function
-	_tick: function( )
-	{
-		var i = 0; var len = this.elist.length
-		while( i < len )
-		{
-			ele = this.elist[i]
-			
-			if( ele.a <= ele.t )
-				++ele.a;
-			else
-			{
-				ele.f()
-				ele.a = 0
-			}
-			
-			++i
-		}
-		
-		me = this
-		this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
-	},
-	// Call function at specified time
-	// NEW: optional firstTick flag
-	add: function( tickat, tickfun, firstTick )
-	{
-		this.elist.push(
-			{
-				a: firstTick === true ? tickat+1 : 0,
-				t: tickat,
-				f:tickfun
-			}
-		)
-	},
-	start: function( )
-	{
-		me = this
-		this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
-	},
-	starti: function( )
-	{
-		this._tick()
-	}
+  // worker function
+  _tick: function( )
+  {
+    var i = 0; var len = this.elist.length
+    while( i < len )
+    {
+      ele = this.elist[i]
+      
+      if( ele.a <= ele.t )
+        ++ele.a;
+      else
+      {
+        ele.f()
+        ele.a = 0
+      }
+      
+      ++i
+    }
+    
+    me = this
+    this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
+  },
+  // Call function at specified time
+  // NEW: optional firstTick flag
+  add: function( tickat, tickfun, firstTick )
+  {
+    this.elist.push(
+      {
+        a: firstTick === true ? tickat+1 : 0,
+        t: tickat,
+        f:tickfun
+      }
+    )
+  },
+  start: function( )
+  {
+    me = this
+    this.ehandle = setTimeout( function(){ me._tick(); }, this.interval );
+  },
+  starti: function( )
+  {
+    this._tick()
+  }
 }
 
 loEngineEvents.create = function()
 {
-	var tmp = new loEngineEvents()
-	
-	tmp.interval = 5
-	
-	tmp.elist = []	
-	return tmp
+  var tmp = new loEngineEvents()
+  
+  tmp.interval = 5
+  
+  tmp.elist = []  
+  return tmp
 }
 
 function loLight() {}
 loLight.prototype = 
 {
-	toString: function( )
-	{
-		"loLight=[type: " + this.type + "]"
-	}
-
+  toString: function( )
+  {
+    return "loLight=[type: " + this.type + "]"
+  }
 }
 
 loLight.create = function( x, y, type )
 {
-	var tmp = new loLight();
-	tmp.type = type;
-	tmp.pos = loPoint.create( x, y )
-	return tmp
+  var tmp = new loLight();
+  tmp.type = type;
+  tmp.pos = loPoint.create( x, y )
+
+  return tmp
 }
 
 loCreatePointLight = function( x, y )
 {
-	return loLight.create( x, y, loEngine.typeLPoint );
+  return loLight.create( x, y, loEngine.typeLPoint );
 }

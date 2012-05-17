@@ -18,8 +18,8 @@ loDraw = function( ctx, loObj, style )
 	{
 		// TODO: circles do not use .pos yet
 		ctx.arc(
-			loObj.x,
-			loObj.y,
+			loObj.pos.x,
+			loObj.pos.y,
 			loObj.radius,
 			0,
 			2*Math.PI,
@@ -63,8 +63,8 @@ loDrawDebug = function( ctx, loObj )
 		
 		// TODO: circles do not use .pos yet
 		ctx.arc(
-			loObj.x,
-			loObj.y,
+			loObj.pos.x,
+			loObj.pos.y,
 			1,
 			0,
 			2*Math.PI,
@@ -108,13 +108,25 @@ loDrawDebug = function( ctx, loObj )
 		ctx.arc(
 			loObj.pos.x,
 			loObj.pos.y,
-			loObj.length,
+			loObj.radius,
 			0,
 			2*Math.PI,
 			false
 		)
 		ctx.stroke()
 		
+		// draw container circle
+		ctx.strokeStyle = "rgba(0,0,0,0.4)";
+		ctx.beginPath();
+		ctx.arc(
+			loObj.pos.x,
+			loObj.pos.y,
+			loObj.apothem(),
+			0,
+			2*Math.PI,
+			false
+		)
+		ctx.stroke()
 		
 		ctx.fillStyle = "rgba(0,0,0,0.4)";
 		loEachVert(
@@ -129,3 +141,89 @@ loDrawDebug = function( ctx, loObj )
 		);
 	}
 }
+
+
+loDrawLight = function( ctx, loObjFrom )
+{
+	var grd = ctx.createRadialGradient(
+		loObjFrom.x,
+		loObjFrom.y,
+		1,
+		loObjFrom.x,
+		loObjFrom.y,
+		300 // STATIC RADIUS FOR NOW
+	);
+	
+	grd.addColorStop(0, "rgb(255,255,255)");
+	// dark blue
+	grd.addColorStop(1, "#000000");
+	
+	ctx.beginPath();
+	ctx.arc(
+		loObjFrom.x,
+		loObjFrom.y,
+		300, // STATIC RADIUS FOR NOW
+		0,
+		2*Math.PI,
+		false
+	)
+	
+	ctx.fillStyle = grd;
+	ctx.fill();
+}
+
+
+loDrawShadow = function( ctx, loObj, loObjFrom )
+{
+	var plyCenter = loObj.pos;
+	var ps = []
+
+  var j = 0;
+  while( j < loObj.sides )
+  {
+    // Find the midpoint on the edge
+    var mp = loObj.midat( j )
+
+    // Make vector from shape center to midpoint
+    var v1 = loMakeVec2( plyCenter, mp )
+
+    // Make vector from light source to midpoint
+    var v2 = loMakeVec2( loObjFrom, mp )
+
+    // If the angle between these two vectors is less than 90deg
+    if( v1.angle( v2 ) < 90 )
+      // Add to a list of points which cast a shadow
+      ps.push( j )
+
+    ++j
+  }
+  
+  j = 0;
+  while( j < ps.length )
+  {
+    var p1 = loObj.at( ps[ j ] )
+    var p1e = loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 )
+
+    var p2 = loObj.at( ps[ j ]+1 )
+    var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
+
+    ctx.fillStyle = "rgba(0,0,0,1)"
+    ctx.strokeStyle = "rgba(0,0,0,0)"
+
+    ctx.beginPath()
+    ctx.moveTo( p1e.x, p1e.y );
+    ctx.lineTo( p1.x, p1.y );
+    ctx.lineTo( p2.x, p2.y );
+    ctx.lineTo( p2e.x, p2e.y );
+    ctx.moveTo( p1e.x, p1e.y );
+
+    ctx.fill();
+    ctx.stroke()
+
+    ++j
+  }
+
+}
+
+
+
