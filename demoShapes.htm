@@ -14,6 +14,15 @@ var loTick = loEngineEvents.create();
 // Sample layer
 var layer_1 = loContainer.findLayer( "Layer 1" )
 
+var lights = loContainer.findLayer( "__lights" )
+if( lights )
+{
+	lights.push
+	(
+		loCreatePointLight( 0, 0 )
+	)
+}
+
 function keydownControl(e){}
 
 function draw()
@@ -24,7 +33,7 @@ function draw()
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.fillStyle = "#000";
 	ctx.strokeStyle = "#000";
-
+	
 	layer_1.render( ctx, $('objDebug').checked )
 }
 
@@ -43,9 +52,7 @@ function demoSetup()
 				{
 					if( $('objRotate').checked )
 					{
-						// if not a circle
-						if( loObj.points )
-							loObj.rotate( loObj.angle +2 );
+						loObj.rotate( loObj.angle +2 );
 					}
 						
 					// there is only ONE object in here
@@ -109,6 +116,36 @@ function createRectangle()
 	)
 }
 
+function createCircle()
+{
+	layer_1.clear();
+	
+	layer_1.push
+	(
+		loCreateCircle
+		(
+			200,
+			200,
+			$('objRadius').value
+		)
+	)
+}
+
+function createEllipse()
+{
+	layer_1.clear();
+	
+	layer_1.push
+	(
+		loCreateEllipse
+		(
+			200,
+			200,
+			$('objWidth').value,
+			$('objHeight').value
+		)
+	)
+}
   </script>
  </head>
 <body onload="demoSetup()">
@@ -157,6 +194,8 @@ function createRectangle()
 				
 				<input type=button onClick="javascript:recreateShapes();" value="Generate">
 				<input type=button onClick="javascript:createRectangle();" value="Generate Rectangle">
+				<input type=button onClick="javascript:createCircle();" value="Generate Circle">
+				<input type=button onClick="javascript:createEllipse();" value="Generate Ellipse">
 			</form>
 			
 			<p>

@@ -10,12 +10,26 @@
 		read more at: http://en.wikipedia.org/wiki/Cyclic_polygon
 */
 
+function loEngine() {}
+loEngine.prototype = 
+{
+	toString: function(){}
+}
+
+loEngine.typePolygon = "__loPolygon";
+loEngine.typeCircle = "__loCircle";
+loEngine.typeEllipse = "__loEllipse";
+
+loEngine.typeLPoint = "__loPointLight";
+loEngine.typeLDirectional = "__loDirLight";
+loEngine.typeLSpot = "__loSpotLight";
+
 function loPolygon() {}
 loPolygon.prototype = 
 {
 	toString: function()
 	{
-		return "loPolygon=[ x: " 	+ loRound( this.pos.x )
+		return this.type + "=[ x: " + loRound( this.pos.x )
 				+ ", y: " 			+ loRound( this.pos.y )
 				+ ", sides: " 		+ loRound( this.sides )
 				+ ", angle: " 		+ loRound( this.angle )
@@ -156,6 +170,7 @@ loPolygon.create = function( x, y, radius, angles )
 	{
 		var tmp = new loPolygon();
 	
+		tmp.type = loEngine.typePolygon;
 		// Centroid
 		tmp.pos = loPoint.create( x, y )
 		// n-sided poly
@@ -279,7 +294,7 @@ loCircle.prototype =
 {
 	toString: function( )
 	{
-		return "loCircle=[ x: " + this.x + ", y: " + this.y + ", radius: " + this.radius + " ]";
+		return this.type + "=[ x: " + this.x + ", y: " + this.y + ", radius: " + this.radius + " ]";
 	},
 	doResize: function( )
 	{
@@ -288,6 +303,10 @@ loCircle.prototype =
 	update: function( )
 	{
 	
+	},
+	rotate: function( deg )
+	{
+		// na
 	},
 	shadowing: function( loP )
 	{
@@ -323,9 +342,11 @@ loCircle.create = function( x, y, radius )
 {
 	var tmp = new loCircle();
 	
+	tmp.type = loEngine.typeCircle;
 	tmp.x = x;
 	tmp.y = y;
 	tmp.radius = radius;
+	tmp.angle = 0 // never rotated
 	
 	tmp.doResize();
 	tmp.update();
@@ -337,6 +358,87 @@ loCircle.create = function( x, y, radius )
 loCreateCircle = function( x, y, radius )
 {
 	return loCircle.create( x, y, radius )
+}
+
+
+function loOval() {}
+loOval.prototype = 
+{
+	toString: function( )
+	{
+		return this.type + "=[ x: "+ this.x
+			+ ", y: " + this.y
+			+ ", width: " + this.width
+			+ ", height: " + this.height
+			+ ", angle: " + this.angle
+			+ " ]";
+	},
+	doResize: function( )
+	{
+		
+	},
+	update: function( )
+	{
+	
+	},
+	rotate: function( deg )
+	{
+		this.angle = deg % 360;
+		this.update()
+	}
+}
+
+loOval.create = function( x, y, width, height )
+{
+	var tmp = new loOval();
+	
+	tmp.type = loEngine.typeEllipse;
+	tmp.x = x;
+	tmp.y = y;
+	tmp.width = width;
+	tmp.height = height;
+	tmp.angle = 0;
+	
+	tmp.doResize();
+	tmp.update();
+	
+	return tmp;
+}
+
+loDrawOval = function( ctx, loObj )
+{
+	var r = loAsRad( loObj.angle )
+	var xrot = Math.sin( r )
+	var yrot = Math.cos( r )
+	
+	ctx.beginPath();
+	
+	// drawing 25 lines to form the oval
+	
+	for (var i = 0; i <= 6.2832; i += 0.251328 )
+	{
+		var a = ( loObj.width * Math.sin( i) )
+		var b = ( loObj.height * Math.cos( i ) )
+
+		//alert([a, b])
+		
+		xPos = loObj.x - a * xrot + b * yrot;
+		yPos = loObj.y + b * xrot + a * yrot;
+
+		( i == 0 ? ctx.moveTo(xPos, yPos) : ctx.lineTo(xPos, yPos) );
+	}
+	
+	ctx.stroke()
+}
+
+loCreateEllipse = function( x, y, width, height )
+{
+	if( width == height )
+		return loCreateCircle( x, y, width )
+	else
+	{
+		return loOval.create( x, y, width, height )
+	}
 }
 
 /*
@@ -375,7 +477,14 @@ loLayer.prototype =
 		var i = 0; var len = this.objects.length
 		while( i < len )
 		{
-			debug === true ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgba(0,0,0,0.5)" )
+			if( this.objects[i].type === loEngine.typeEllipse )
+			{
+				loDrawOval( ctx, this.objects[i] )
+			}
+			else //if( this.objects[i].type === loEngine.typePolygon )
+			{
+				debug === true ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgba(0,0,0,0.5)" )
+			}
 			++i
 		}
 	},
@@ -438,6 +547,18 @@ loWorld.prototype =
 		)
 		++this.nextid
 	}
+	/*,
+	// Render all the layers with the __lights layer
+	render: function()
+	{
+		var i = 1; var len = this.layers.length;
+		while( i < len )
+		{
+		
+		
+		}
+	}
+	*/
 }
 
 loWorld.create = function()
@@ -515,3 +636,25 @@ loEngineEvents.create = function()
 	return tmp
 }
 
+function loLight() {}
+loLight.prototype = 
+{
+	toString: function( )
+	{
+		"loLight=[type: " + this.type + "]"
+	}
+
+}
+
+loLight.create = function( x, y, type )
+{
+	var tmp = new loLight();
+	tmp.type = type;
+	tmp.pos = loPoint.create( x, y )
+	return tmp
+}
+
+loCreatePointLight = function( x, y )
+{
+	return loLight.create( x, y, loEngine.typeLPoint );
+}
