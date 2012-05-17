@@ -51,6 +51,8 @@ function draw()
 	
 	loContainer.render( ctx, $('objDebug').checked )
 	
+	//layer_1.render( ctx, $('objDebug').checked )
+	
 	ctx.fillStyle = "#000";
 	ctx.beginPath();
 	ctx.fillRect( myPointLight.pos.x-1, myPointLight.pos.y-1, 2, 2 )
@@ -99,6 +101,20 @@ function demoSetup()
 	recreateShapes()
 	
 	loTick.starti();
+}
+
+function addShape()
+{
+	var tmp = loPolygon.create
+	(
+		Number($('objPosX').value),
+		Number($('objPosY').value),
+		Number($('objRadius').value),
+		loMakeNArray( $('objSides').value )
+	)
+	
+	layer_1.push( tmp )
+	$('loDebugInfo').innerHTML += tmp
 }
 
 function recreateShapes()
@@ -194,6 +210,10 @@ function createCircle()
 				<input type=button onClick="javascript:recreateShapes();" value="Generate">
 				<input type=button onClick="javascript:createRectangle();" value="Generate Rectangle">
 				<input type=button onClick="javascript:createCircle();" value="Generate Circle">
+				<br><br>
+				<input type=text name="objPosX" value="200" /> (x) <br>
+				<input type=text name="objPosY" value="100" /> (y) <br>
+				<input type=button onClick="javascript:addShape();" value="Add Shape">
 			</form>
 			
 			<p>

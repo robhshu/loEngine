@@ -30,7 +30,7 @@ loDraw = function( ctx, loObj, style )
 	{
 		var p = loObj.at( 0 )
 		ctx.moveTo( p.x, p.y );
-		
+    
 		loEachVert(
 			loObj,
 			1,

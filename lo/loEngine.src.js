@@ -352,24 +352,26 @@ loLayer.prototype =
     else
       this.objects.push( loObj )
   },
-  // Render all objects (NOTE: you can only draw in debug)
-  render: function( ctx, debug, shadow )
+  renderShadow: function( ctx, source )
   {
     var i = 0; var len = this.objects.length
     while( i < len )
     {
       if( this.objects[i].type === loEngine.typePolygon )
       {
-        if( shadow.type === loEngine.typeLPoint )
-          loDrawShadow( ctx, this.objects[i], shadow.pos )
-      
-        debug ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgb(100,10,0)" );
+          if( source.type === loEngine.typeLPoint )
+            loDrawShadow( ctx, this.objects[i], source.pos )
       }
-      else
-      {
-        // i.e circle
-        loDrawDebug( ctx, this.objects[i] );
-      }
+      ++i
+    }
+  },
+  // Render all objects (NOTE: you can only draw in debug)
+  render: function( ctx, debug )
+  {
+    var i = 0; var len = this.objects.length
+    while( i < len )
+    {
+      debug ? loDrawDebug( ctx, this.objects[i] ) : loDraw( ctx, this.objects[i], "rgb(100,10,0)" );
       ++i
     }
   },
@@ -451,10 +453,19 @@ loWorld.prototype =
           
           loDrawLight( ctx, lightObj.pos )
           
+          // render shadows together
           var i = 1;
           while( i < this.layers.length )
           {
-            this.layers[i].layer.render( ctx, debug, lightObj )
+            this.layers[i].layer.renderShadow( ctx, lightObj )
+            ++i
+          }
+          
+          // then render the objects ontop
+          i = 1
+          while( i < this.layers.length )
+          {
+            this.layers[i].layer.render( ctx, debug )
             ++i
           }
         }
