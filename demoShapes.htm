@@ -28,8 +28,11 @@ function updateMyLight()
 {
 	--myPointLight.angle
 
+	
+	var lRadius = $('objLightRadius') ? Number($('objLightRadius').value) || 200 : 200
+	
 	// Rotate around a radius of 200
-	var lightPos = loPolygon.makeVertex( myPointLight.angle, 200 )
+	var lightPos = loPolygon.makeVertex( myPointLight.angle, lRadius )
 	
 	myPointLight.pos.x = 200 + lightPos.x
 	myPointLight.pos.y = 200 + lightPos.y
@@ -214,6 +217,8 @@ function createCircle()
 				<input type=text name="objPosX" value="200" /> (x) <br>
 				<input type=text name="objPosY" value="100" /> (y) <br>
 				<input type=button onClick="javascript:addShape();" value="Add Shape">
+				<br><br>
+				<input type=text name="objLightRadius" value="200" /> (light radius)
 			</form>
 			
 			<p>

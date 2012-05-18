@@ -173,6 +173,35 @@ loDrawLight = function( ctx, loObjFrom )
 }
 
 
+loDrawShadowCirc = function( ctx, loObj, loObjFrom )
+{
+  var res = loObj.shadowing( loObjFrom )
+  
+  if( res.length === 2 )
+  {
+    var p1 = res[0]
+    p1.addi( loObj.pos )
+    var p1e = loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 )
+
+    var p2 = res[1]
+    p2.addi( loObj.pos )
+    var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
+
+    ctx.fillStyle = "rgba(0,0,0,1)"
+    ctx.strokeStyle = "rgba(0,0,0,0)"
+
+    ctx.beginPath()
+    ctx.moveTo( p1e.x, p1e.y );
+    ctx.lineTo( p1.x, p1.y );
+    ctx.lineTo( p2.x, p2.y );
+    ctx.lineTo( p2e.x, p2e.y );
+    ctx.moveTo( p1e.x, p1e.y );
+
+    ctx.fill();
+    ctx.stroke()
+  }
+}
+
 loDrawShadow = function( ctx, loObj, loObjFrom )
 {
 	var plyCenter = loObj.pos;

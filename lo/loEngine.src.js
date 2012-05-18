@@ -362,6 +362,11 @@ loLayer.prototype =
           if( source.type === loEngine.typeLPoint )
             loDrawShadow( ctx, this.objects[i], source.pos )
       }
+      else if( this.objects[i].type === loEngine.typeCircle )
+      {
+        if( source.type === loEngine.typeLPoint )
+          loDrawShadowCirc( ctx, this.objects[i], source.pos )
+      }
       ++i
     }
   },
