@@ -33,6 +33,15 @@ loRound = function( x )
 }
 
 /*
+  loRandom
+    Return a whole random number ( 0 - n )
+*/
+loRand = function( n )
+{
+  return Math.round( Math.random() * n )
+}
+
+/*
 	loVec2
 		2D vector class
 */

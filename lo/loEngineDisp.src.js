@@ -153,7 +153,7 @@ loDrawDebug = function( ctx, loObj )
 }
 
 
-loDrawLight = function( ctx, loObjFrom )
+loDrawLight = function( ctx, loObjFrom, secondPass )
 {
   // todo: type checking
   
@@ -169,9 +169,8 @@ loDrawLight = function( ctx, loObjFrom )
 		300 // STATIC RADIUS FOR NOW
 	);
 	
-	grd.addColorStop(0, "rgb(255,255,255)");
-	// dark blue
-	grd.addColorStop(1, "#000000");
+  grd.addColorStop(0, "#fff");  // white (for the moment)
+  grd.addColorStop(1, "rgba(255,255,255,0)"); // to black with alpha of 0  
 	
 	ctx.beginPath();
 	ctx.arc(
@@ -202,8 +201,8 @@ loDrawShadowCirc = function( ctx, loObj, loObjFrom )
     p2.addi( loObj.pos )
     var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
 
-    ctx.fillStyle = "rgba(0,0,0,1)"
-    ctx.strokeStyle = "rgba(0,0,0,0)"
+    ctx.fillStyle = "#000"
+    ctx.strokeStyle = "#000"
 
     ctx.beginPath()
     ctx.moveTo( p1e.x, p1e.y );
@@ -255,8 +254,8 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
     var p2 = loObj.at( ps[ j ]+1 )
     var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
 
-    ctx.fillStyle = "rgba(0,0,0,1)"
-    ctx.strokeStyle = "rgba(0,0,0,0)"
+    ctx.fillStyle = "#000"
+    ctx.strokeStyle = "#000"
     
     ctx.beginPath()
     ctx.moveTo( p1e.x, p1e.y );
@@ -266,7 +265,7 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
     ctx.moveTo( p1e.x, p1e.y );
 
     ctx.fill();
-    //ctx.stroke()
+    ctx.stroke()
 
     ++j
   }

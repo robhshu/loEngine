@@ -18,11 +18,14 @@ var layer_1 = loContainer.newLayer( "Layer 1" )
 var myPointLight = loCreatePointLight( 0, 0 );
 
 // We want to make it dynamic, so assign an angle property
-myPointLight.angle = 0
+myPointLight.angle = loRand( 360 )
 
 // Push the light to the container
 var lights = loContainer.findLayer( "__lights" )
 if( lights ) lights.push( myPointLight )
+
+// add another light at the bottom left corner
+if( lights ) lights.push( loCreatePointLight( 0, 400 ) )
 
 function updateMyLight()
 {
@@ -211,7 +214,7 @@ function switchShadows()
 				</tr>
 				<tr>
 					<td>Radius</td>
-					<td><input type=text name="objRadius" value="100" /></td>
+					<td><input type=text name="objRadius" value="40" /></td>
 				</tr>
 				<tr>
 					<td>Rectangle</td>

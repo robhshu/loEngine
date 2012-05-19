@@ -462,16 +462,39 @@ loWorld.prototype =
       {
         if( lFirst.layer.objects.length > 0 )
         {
-          var lightObj = lFirst.layer.objects[0];
-          
-          loDrawLight( ctx, lightObj.pos )
-          
-          // render shadows together
-          var i = 1;
-          while( i < this.layers.length )
+          var lc = 0;
+          while( lc < lFirst.layer.objects.length )
           {
-            this.layers[i].layer.renderShadow( ctx, lightObj )
-            ++i
+            // draw all lights
+            var lightObj = lFirst.layer.objects[ lc ];
+            
+            loDrawLight( ctx, lightObj.pos )
+            ++lc
+          }
+          
+          var lc = 0
+          while( lc < lFirst.layer.objects.length )
+          {
+            // render shadows together
+            var lightObj = lFirst.layer.objects[ lc ];
+            
+            var i = 1;
+            while( i < this.layers.length )
+            {
+              this.layers[i].layer.renderShadow( ctx, lightObj )
+              ++i
+            }
+            ++lc
+          }
+          
+          var lc = 0;
+          while( lc < lFirst.layer.objects.length )
+          {
+            // draw all lights
+            var lightObj = lFirst.layer.objects[ lc ];
+            
+            loDrawLight( ctx, lightObj.pos )
+            ++lc
           }
           
           // then render the objects ontop
@@ -484,10 +507,11 @@ loWorld.prototype =
         }
         else
         {
+          // to self: this is not really FATAL, but no shadows will render
           throw 'Lighting layer contains no lights';
         }
       }
-      // Else, just render it
+      // or just render the layer WITHOUT any shadows (because there are no lights)
       else
       {
         lFirst.layer.render( ctx, debug )
