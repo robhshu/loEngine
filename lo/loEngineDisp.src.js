@@ -157,16 +157,16 @@ loDrawLight = function( ctx, loObjFrom, secondPass )
 {
   // todo: type checking
   
-  if( loObjFrom.pos )
-  alert( loObjFrom )
+  if( !( loObjFrom.pos ) )
+    alert( 'Warning: .pos attribute not passed' )
   
 	var grd = ctx.createRadialGradient(
-		loObjFrom.x,
-		loObjFrom.y,
+		loObjFrom.pos.x,
+		loObjFrom.pos.y,
 		25, // NEW
-		loObjFrom.x,
-		loObjFrom.y,
-		300 // STATIC RADIUS FOR NOW
+		loObjFrom.pos.x,
+		loObjFrom.pos.y,
+		loObjFrom.powradius
 	);
 	
   grd.addColorStop(0, "#fff");  // white (for the moment)
@@ -174,9 +174,9 @@ loDrawLight = function( ctx, loObjFrom, secondPass )
 	
 	ctx.beginPath();
 	ctx.arc(
-		loObjFrom.x,
-		loObjFrom.y,
-		300, // STATIC RADIUS FOR NOW
+		loObjFrom.pos.x,
+		loObjFrom.pos.y,
+		loObjFrom.powradius,
 		0,
 		2*Math.PI,
 		false
