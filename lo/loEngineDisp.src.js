@@ -5,6 +5,16 @@
 	v0.0	Split rendering into seperate module
 */
 
+loPoint.prototype.lineFrom = function( ctx )
+{
+  ctx.lineTo( this.x, this.y )
+}
+
+loPoint.prototype.moveFrom = function( ctx )
+{
+  ctx.moveTo( this.x, this.y )
+}
+
 /*
 	loDraw
 		Draw light object on rendering context
@@ -147,10 +157,13 @@ loDrawLight = function( ctx, loObjFrom )
 {
   // todo: type checking
   
+  if( loObjFrom.pos )
+  alert( loObjFrom )
+  
 	var grd = ctx.createRadialGradient(
 		loObjFrom.x,
 		loObjFrom.y,
-		1,
+		25, // NEW
 		loObjFrom.x,
 		loObjFrom.y,
 		300 // STATIC RADIUS FOR NOW
@@ -204,6 +217,10 @@ loDrawShadowCirc = function( ctx, loObj, loObjFrom )
   }
 }
 
+/*
+  Render hard-edges shadows from a point light source
+*/
+
 loDrawShadow = function( ctx, loObj, loObjFrom )
 {
 	var plyCenter = loObj.pos;
@@ -256,6 +273,9 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
 
 }
 
+/*
+  Render soft-edged shadows from a circular light souce
+*/
 
 loDrawShadowEx = function( ctx, loObj, loObjFrom )
 {
@@ -267,7 +287,22 @@ loDrawShadowEx = function( ctx, loObj, loObjFrom )
   var j = 0;
   while( j < loObj.sides )
   {
+  
+  /*
+    // get the points
+    var p1 = loObj.at( j ) // j is know to be in bounds
+    var p2 = loObj.at( (j+1) % loObj.sides )
+    
     // Find the midpoint on the edge
+    var mp = p1.copy();
+    mp.subi( p2 )
+    mp.x /= 2
+    mp.y /= 2
+    mp.addi( p2 )
+    mp.addi( loObj.pos )
+    */
+    // NOTE: bceause p1 and p2 may be used later, the midpoint can be
+    // calculated here without another function call
     var mp = loObj.midat( j )
 
     // Make vector from shape center to midpoint
@@ -277,102 +312,82 @@ loDrawShadowEx = function( ctx, loObj, loObjFrom )
     var v2 = loMakeVec2( loObjFrom.pos, mp )
 
     // If the angle between these two vectors is less than 90deg
-    if( v1.angle( v2 ) < 90 )
-      // Add to a list of points which cast a shadow
+    if( v1.angle( v2 ) <= 90 )
+    {
       ps.push( j )
-
+    }
+    
     ++j
   }
-  
-  document.title = ps.length
-  
-  // for now
-  if( ps.length !== 1 )
-    return;
-    
+
   j = 0;
-  //while( j < ps.length )
+  
+  while( j < ps.length )
   {
     // get the points
-    var p1 = loObj.at( ps[ j ] )
-    var p2 = loObj.at( ps[ j ]+1 )
+    var p1 = loObj.at( ps[j] ) // j is know to be in bounds
+    var p2 = loObj.at( (ps[j]+1) % loObj.sides )
     
+    // for point 1
+    var fromLight1 = loObjFrom.shadowing( p1 )
     
-    var p1e = loMakeVec2( loObjFrom.pos, p1 ).asPoint().project( p1, 300 )
-    var p2e = loMakeVec2( loObjFrom.pos, p2 ).asPoint().project( p2, 300 )
+    if( fromLight1.length > 0 )
+    {
+      var p1_1 = fromLight1[0].add( loObjFrom.pos )
+      var p1_2 = fromLight1[1].add( loObjFrom.pos )
     
-    ctx.fillStyle = "rgb(200,20,20)"
-    
-    // draw the MAIN shadow component
-    ctx.beginPath()
-    ctx.moveTo( p1e.x, p1e.y );
-    ctx.lineTo( p1.x, p1.y );
-    ctx.lineTo( p2.x, p2.y );
-    ctx.lineTo( p2e.x, p2e.y );
-    ctx.moveTo( p1e.x, p1e.y );
-    ctx.fill();
-    
-    ctx.fillStyle = "rgb(20,20,200)"
-    
-    
-    // THEN, we can get additional tangent stuff 
-    
-    
-    // get the tangents from POINT 1
-    var fromLight = loObjFrom.shadowing( p1 )
-    
-    var p1_1 = fromLight[0].add( loObjFrom.pos )
-    var p1_2 = fromLight[1].add( loObjFrom.pos )
-    
-    p1_1 = loMakeVec2( p1_1, p1 ).asPoint().project( p1, 300 )
-    p1_2 = loMakeVec2( p1_2, p1 ).asPoint().project( p1, 300 )
-    
-    ctx.strokeStyle = "rgb(255,0,255)" // purple
-    ctx.beginPath()
-    ctx.moveTo( p1.x, p1.y )
-    ctx.lineTo( p1_1.x, p1_1.y )
-    ctx.moveTo( p1.x, p1.y )
-    ctx.lineTo( p1_2.x, p1_2.y )
-    ctx.stroke()    
-    
-    
-    // get the tangents from POINT 2
-    var fromLight = loObjFrom.shadowing( p1 )
-    
-    var p2_1 = fromLight[0].add( loObjFrom.pos )
-    var p2_2 = fromLight[1].add( loObjFrom.pos )
-    
-    p2_1 = loMakeVec2( p2_1, p2 ).asPoint().project( p2, 300 )
-    p2_2 = loMakeVec2( p2_2, p2 ).asPoint().project( p2, 300 )
+      p1_1 = loMakeVec2( p1_1, p1 ).asPoint().project( p1, 300 )
+      p1_2 = loMakeVec2( p1_2, p1 ).asPoint().project( p1, 300 )
 
-    ctx.strokeStyle = "rgb(255,128,64)" // purple
-    ctx.beginPath()
-    ctx.moveTo( p2.x, p2.y )
-    ctx.lineTo( p2_1.x, p2_1.y )
-    ctx.moveTo( p2.x, p2.y )
-    ctx.lineTo( p2_2.x, p2_2.y )
-    ctx.stroke()
-    
-    
-    // test!
-    ctx.beginPath()
-    ctx.moveTo( p1.x, p1.y )
-    
-    ctx.lineTo( p1_1.x, p1_1.y )
-    ctx.lineTo( p2_2.x, p2_2.y )
-    ctx.lineTo( p2.x, p2.y )
-    
-    ctx.lineTo( p1.x, p1.y )
-    ctx.fill()
-    
+      // for point 2
+      var fromLight2 = loObjFrom.shadowing( p2 )
+      
+      if( fromLight2.length > 0 )
+      {
+        var p2_1 = fromLight2[0].add( loObjFrom.pos )
+        var p2_2 = fromLight2[1].add( loObjFrom.pos )
+      
+        p2_1 = loMakeVec2( p2_1, p2 ).asPoint().project( p2, 300 )
+        p2_2 = loMakeVec2( p2_2, p2 ).asPoint().project( p2, 300 )
+        
+        // draw the prenumbra
+        ctx.fillStyle = "rgba(200,20,20,0.2)"
+        
+        ctx.beginPath()
+        
+        p1.moveFrom( ctx )
+        p1_1.lineFrom( ctx )
+        p1_2.lineFrom( ctx )
+        p1.lineFrom( ctx )
+        
+        ctx.fill();
+        
+        
+        //// project points
+        //var p1e = loMakeVec2( loObjFrom.pos, p1 ).asPoint().project( p1, 300 )
+        //var p2e = loMakeVec2( loObjFrom.pos, p2 ).asPoint().project( p2, 300 )
+        
+        // todo: get the _1 or _2 angle from the line
+        // then we can project the points if we want to join the shape
+        // OR, it its on the edge, do something  like this:
+        
+        // now draw the umbra
+        ctx.fillStyle = "rgb(200,20,20)"
+        
+        ctx.beginPath()
+        
+        p1.moveFrom( ctx )
+        p1_1.lineFrom( ctx )
+        p2_2.lineFrom( ctx )
+        p2.lineFrom( ctx )
+        // join it back?
+
+        ctx.fill();
+        
+      }
+    }
     
     ++j
   }
-
 }
-
-
-
-
-
 
