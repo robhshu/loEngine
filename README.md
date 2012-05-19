@@ -15,7 +15,9 @@ This is personal project of mine, extended from the curiosity of creating lighti
 Current State
 =============
 
-Screenshot
+![Screenshot](https://github.com/robhshu/loEngine/raw/master/sample2.png)
+
+![Screenshot](https://github.com/robhshu/loEngine/raw/master/sample.png)
 
 * Hard-edged shadows are implemented for n-sided polygons and circles
 * Soft-edged shadows are only an extended goal (the current attempt was premature)
