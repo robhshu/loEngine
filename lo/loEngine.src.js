@@ -14,6 +14,7 @@ loEngine.typePolygon = "__loPolygon";
 loEngine.typeCircle = "__loCircle";
 loEngine.typeEllipse = "__loEllipse";
 
+loEngine.typeLTest = "__loTestLightSource";
 loEngine.typeLPoint = "__loPointLight";
 loEngine.typeLDirectional = "__loDirLight";
 loEngine.typeLSpot = "__loSpotLight";
@@ -29,7 +30,7 @@ loPolygon.prototype =
     return [
       "Type:",      this.type,
       "\nPos:",     this.pos,
-      "\noRadius:", this.radius,
+      "\noRadius:", loRound( this.radius ),
       "\niRadius:", loRound( this.apothem() ),
       "\nSides:",   this.sides,
       "\nAngle:",   loRound( this.angle )
@@ -225,6 +226,7 @@ loCreateHexagon = function( x, y, radius )
 */
 loCreateRect = function( x, y, width, height, radius )
 {
+  //radius = 0.5 * Math.sqrt( width*width + height*height )
   var ah = loAsDeg( Math.atan( height/width ) )
  
   return loPolygon.create( x, y, radius, loPrepAngles([ -ah, ah, 180-ah, 180+ah ]) )
@@ -297,7 +299,7 @@ loCircle.prototype =
     // create the new points with the known angles
     var v1 = loPolygon.makeVertex( -theta +aoff, this.radius )
     var v2 = loPolygon.makeVertex( theta  +aoff, this.radius )
-//    alert( v )
+
     return [ v1,v2 ]
   }
 }
@@ -359,8 +361,14 @@ loLayer.prototype =
     {
       if( this.objects[i].type === loEngine.typePolygon )
       {
-          if( source.type === loEngine.typeLPoint )
-            loDrawShadow( ctx, this.objects[i], source.pos )
+        if( source.type === loEngine.typeLPoint )
+          loDrawShadow( ctx, this.objects[i], source.pos )
+        else if( source.type === loEngine.typeLTest )
+        {
+          // NOTE: passing the WHOLE object - not just the position
+          // we need to call the shadowing() member of the source
+          loDrawShadowEx( ctx, this.objects[i], source )
+        }
       }
       else if( this.objects[i].type === loEngine.typeCircle )
       {
@@ -583,4 +591,15 @@ loLight.create = function( x, y, type )
 loCreatePointLight = function( x, y )
 {
   return loLight.create( x, y, loEngine.typeLPoint );
+}
+
+loCreateTestLight = function( x, y )
+{
+  // create a circular light source
+  var tmp = loCreateCircle( x, y, 50 )
+  
+  // override the loCircle type with light
+  tmp.type = loEngine.typeLTest;
+  
+  return tmp;
 }

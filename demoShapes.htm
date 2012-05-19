@@ -168,6 +168,18 @@ function createCircle()
 	$('loDebugInfo').innerHTML = tmp
 }
 
+function switchShadows()
+{
+	lights.clear()
+	
+	if( $('objSoftTest').checked )	myPointLight = loCreateTestLight( 0, 0 );
+	else							myPointLight = loCreatePointLight( 0, 0 );
+	
+	lights.push( myPointLight )
+	
+	updateMyLight()
+}
+
   </script>
  </head>
 <body onload="demoSetup()">
@@ -225,6 +237,9 @@ function createCircle()
 				<label><input type=checkbox name="objDebug" checked /> Draw debug</label>
 				<label><input type=checkbox name="objRotate" /> Rotate shape</label>
 				<label><input type=checkbox name="objRotateLight" /> Rotate Light</label>
+				<br>
+				<b>Alpha soft shadows</b>
+				<label><input type=checkbox name="objSoftTest" onClick="javascript:switchShadows()" /> Enable</label> (only toggle once)
 			</p>
 			
 			<pre name='loDebugInfo'></pre>
