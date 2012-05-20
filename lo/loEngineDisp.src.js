@@ -169,8 +169,9 @@ loDrawLight = function( ctx, loObjFrom, secondPass )
 		loObjFrom.powradius
 	);
 	
-  grd.addColorStop(0, "#fff");  // white (for the moment)
-  grd.addColorStop(1, "rgba(255,255,255,0)"); // to black with alpha of 0  
+  grd.addColorStop(0.1, "#fff");
+  grd.addColorStop(0.2, "rgba(255,255,255,0.9)");
+  grd.addColorStop(1, loObjFrom.colour);
 	
 	ctx.beginPath();
 	ctx.arc(
@@ -181,9 +182,11 @@ loDrawLight = function( ctx, loObjFrom, secondPass )
 		2*Math.PI,
 		false
 	)
-	
+  
+  ctx.globalCompositeOperation = ( secondPass === true ) ? "darker" : "lighter";
 	ctx.fillStyle = grd;
 	ctx.fill();
+  ctx.globalCompositeOperation = "source-over"; // back to default
 }
 
 
@@ -246,13 +249,25 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
   }
   
   j = 0;
+  var preCalc = [-1] // index, point
   while( j < ps.length )
   {
-    var p1 = loObj.at( ps[ j ] )
-    var p1e = loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 )
-
+    var p1, p1e;
+    if( preCalc[0] === ps[ j ] )
+    {
+      p1 = preCalc[1];
+      p1e= preCalc[2];
+    }
+    else
+    {
+      p1 = loObj.at( ps[ j ] )
+      p1e= loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 )
+      //console.log( 'cache miss: ' + [j,preCalc[0],ps[j],ps[j]+1].join(', ') + '\n' )
+    }
+    
     var p2 = loObj.at( ps[ j ]+1 )
     var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
+    preCalc = [ (ps[j]+1)%loObj.sides, p1.copy(), p1e.copy() ]
 
     ctx.fillStyle = "#000"
     ctx.strokeStyle = "#000"
@@ -260,6 +275,7 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
     ctx.beginPath()
     ctx.moveTo( p1e.x, p1e.y );
     ctx.lineTo( p1.x, p1.y );
+    // todo: project a point from the shape center ?? this will give our shadows more depth
     ctx.lineTo( p2.x, p2.y );
     ctx.lineTo( p2e.x, p2e.y );
     ctx.moveTo( p1e.x, p1e.y );
@@ -270,6 +286,7 @@ loDrawShadow = function( ctx, loObj, loObjFrom )
     ++j
   }
 
+  document.title = ps.length
 }
 
 /*

@@ -16,16 +16,14 @@ var layer_1 = loContainer.newLayer( "Layer 1" )
 
 // Create a point light (note: this remains a reference to it)
 var myPointLight = loCreatePointLight( 0, 0 );
+myPointLight.colour = "rgba(255,20,255,0)";
 
 // We want to make it dynamic, so assign an angle property
-myPointLight.angle = loRand( 360 )
+myPointLight.angle = 250
 
 // Push the light to the container
 var lights = loContainer.findLayer( "__lights" )
 if( lights ) lights.push( myPointLight )
-
-// add another light at the bottom left corner
-if( lights ) lights.push( loCreatePointLight( 0, 400 ) )
 
 function updateMyLight()
 {
@@ -89,7 +87,7 @@ function demoSetup()
 						loObj.rotate( loObj.angle +2 );
 							
 						// there is only ONE object in here
-						$('loDebugInfo').innerHTML = loObj
+						//$('loDebugInfo').innerHTML = loObj
 					}
 				)
 			}
@@ -129,6 +127,20 @@ function demoSetup()
 	loTick.starti();
 }
 
+function addLight()
+{
+	if( !( lights ) ) return;
+	
+	lights.push
+	(
+		loCreatePointLight
+		(
+			Number( $('objLightX').value ),
+			Number( $('objLightY').value )
+		)
+	)
+}
+
 function addShape()
 {
 	var tmp = loPolygon.create
@@ -140,7 +152,7 @@ function addShape()
 	)
 	
 	layer_1.push( tmp )
-	$('loDebugInfo').innerHTML += tmp
+	//$('loDebugInfo').innerHTML += tmp
 }
 
 function recreateShapes()
@@ -156,7 +168,7 @@ function recreateShapes()
 	)
 	
 	layer_1.push( tmp )
-	$('loDebugInfo').innerHTML = tmp
+	//$('loDebugInfo').innerHTML = tmp
 }
 
 function createRectangle()
@@ -173,7 +185,7 @@ function createRectangle()
 	)
 	
 	layer_1.push( tmp )
-	$('loDebugInfo').innerHTML = tmp
+	//$('loDebugInfo').innerHTML = tmp
 }
 
 function createCircle()
@@ -188,7 +200,7 @@ function createCircle()
 	)
 	
 	layer_1.push( tmp )
-	$('loDebugInfo').innerHTML = tmp
+	//$('loDebugInfo').innerHTML = tmp
 }
 
 function switchShadows()
@@ -249,10 +261,18 @@ function switchShadows()
 				<input type=button onClick="javascript:createRectangle();" value="Generate Rectangle">
 				<input type=button onClick="javascript:createCircle();" value="Generate Circle">
 				<br><br>
+				<div style="float:left">
 				<input type=text name="objPosX" value="200" /> (x) <br>
 				<input type=text name="objPosY" value="100" /> (y) <br>
-				<input type=button onClick="javascript:addShape();" value="Add Shape">
-				<br><br>
+				<input type=button onClick="javascript:addShape();" value="Add Polygon">
+				</div>
+				<div style="float:right">
+				<input type=text name="objLightX" value="0" /> (x) <br>
+				<input type=text name="objLightY" value="400" /> (y) <br>
+				<input type=button onClick="javascript:addLight();" value="Add Light"> (blue)
+				</div>
+				<div style="clear:both"></div>
+				<br>
 				<input type=text name="objLightRadius" value="200" /> (light radius)
 			</form>
 			
@@ -265,9 +285,7 @@ function switchShadows()
 				<label><input type=checkbox name="objSoftTest" onClick="javascript:switchShadows()" /> Enable</label> (only toggle once)
 			</p>
 			
-			<pre name='loDebugInfo'></pre>
-			
-			NOTE: loEngine only generates outer-circle polygons
+			<!--<pre name='loDebugInfo'></pre>-->
 			
 		</div>
 	</div>

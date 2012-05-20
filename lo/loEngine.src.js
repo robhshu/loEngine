@@ -493,7 +493,7 @@ loWorld.prototype =
             // draw all lights
             var lightObj = lFirst.layer.objects[ lc ];
             
-            loDrawLight( ctx, lightObj )
+            loDrawLight( ctx, lightObj, true )
             ++lc
           }
           
@@ -609,6 +609,7 @@ loLight.create = function( x, y, type )
   tmp.type = type;
   tmp.pos = loPoint.create( x, y )
   tmp.powradius = 300
+  tmp.colour = "rgba(20,255,255,0)"
 
   return tmp
 }
@@ -625,6 +626,7 @@ loCreateTestLight = function( x, y )
   
   tmp.angle = 0
   tmp.radius = 50
+  tmp.colour = "rgba(255,20,255,0)";
   
   // override the loCircle type with light
   tmp.type = loEngine.typeLTest;
