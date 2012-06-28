@@ -19,6 +19,9 @@ loEngine.typeLPoint = "__loPointLight";
 loEngine.typeLDirectional = "__loDirLight";
 loEngine.typeLSpot = "__loSpotLight";
 
+loEngine.typeSSolid = "__loSolidShadow";
+loEngine.typeSOccluded = "__loOccludedShadow";
+
 /*****************   POLYGON CLASS   *****************/
 
 function loPolygon() {}

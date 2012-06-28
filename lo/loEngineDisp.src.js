@@ -5,6 +5,12 @@
 	v0.0	Split rendering into seperate module
 */
 
+Array.prototype.forEach = function( func )
+{
+  var i=0;
+  while( i < this.length ) func( this[i++] )
+}
+
 loPoint.prototype.lineFrom = function( ctx )
 {
   ctx.lineTo( this.x, this.y )
@@ -219,74 +225,65 @@ loDrawShadowCirc = function( ctx, loObj, loObjFrom )
   }
 }
 
-/*
-  Render hard-edges shadows from a point light source
-*/
-
-loDrawShadow = function( ctx, loObj, loObjFrom )
+function loDrawShadow( ctx, loObj, loObjFrom, type )
 {
-	var plyCenter = loObj.pos;
-	var ps = []
-
-  var j = 0;
-  while( j < loObj.sides )
+  var j = 0
+	while( j < loObj.sides )
   {
     // Find the midpoint on the edge
     var mp = loObj.midat( j )
 
     // Make vector from shape center to midpoint
-    var v1 = loMakeVec2( plyCenter, mp )
+    var v1 = loMakeVec2( loObj.pos, mp ).asPoint()
 
     // Make vector from light source to midpoint
-    var v2 = loMakeVec2( loObjFrom, mp )
+    var v2 = loMakeVec2( loObjFrom, mp ).asPoint()
 
-    // If the angle between these two vectors is less than 90deg
-    if( v1.angle( v2 ) < 90 )
-      // Add to a list of points which cast a shadow
-      ps.push( j )
+    var cross = v1.x*v2.x + v1.y*v2.y
 
-    ++j
-  }
-  
-  j = 0;
-  var preCalc = [-1] // index, point
-  while( j < ps.length )
-  {
-    var p1, p1e;
-    if( preCalc[0] === ps[ j ] )
+    /*
+      types
+        occluded  o
+        solid     s
+    */
+    
+    if( ( type === 's' ? cross <= 0 : cross > 0 ) )
     {
-      p1 = preCalc[1];
-      p1e= preCalc[2];
-    }
-    else
-    {
-      p1 = loObj.at( ps[ j ] )
-      p1e= loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 )
-      //console.log( 'cache miss: ' + [j,preCalc[0],ps[j],ps[j]+1].join(', ') + '\n' )
+      var p1 = loObj.at( j )
+      var p2 = loObj.at( j+1 )
+      
+      var p1e = loMakeVec2( loObjFrom, p1 ).asPoint().project( p1, 300 + loObj.radius )
+      var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 + loObj.radius )
+
+      ctx.fillStyle = "#000"
+      ctx.strokeStyle = "#000"
+      
+      // fill each projected shadow region
+      ctx.beginPath()
+      {
+        ctx.moveTo( p1.x, p1.y );
+        ctx.lineTo( p1e.x, p1e.y );
+        ctx.lineTo( p2e.x, p2e.y );
+        ctx.lineTo( p2.x, p2.y );
+      }
+      ctx.fill();
+
+      // stroke the line projections
+      //if( type === 'o' )
+      {
+        ctx.beginPath()
+        {
+          ctx.moveTo( p1.x, p1.y );
+          ctx.lineTo( p1e.x, p1e.y );
+          ctx.moveTo( p2.x, p2.y );
+          ctx.lineTo( p2e.x, p2e.y );
+        }
+        ctx.stroke();
+      }
     }
     
-    var p2 = loObj.at( ps[ j ]+1 )
-    var p2e = loMakeVec2( loObjFrom, p2 ).asPoint().project( p2, 300 )
-    preCalc = [ (ps[j]+1)%loObj.sides, p1.copy(), p1e.copy() ]
-
-    ctx.fillStyle = "#000"
-    ctx.strokeStyle = "#000"
-    
-    ctx.beginPath()
-    ctx.moveTo( p1e.x, p1e.y );
-    ctx.lineTo( p1.x, p1.y );
-    // todo: project a point from the shape center ?? this will give our shadows more depth
-    ctx.lineTo( p2.x, p2.y );
-    ctx.lineTo( p2e.x, p2e.y );
-    ctx.moveTo( p1e.x, p1e.y );
-
-    ctx.fill();
-    ctx.stroke()
-
     ++j
   }
-
-  document.title = ps.length
 }
 
 /*
@@ -406,4 +403,3 @@ loDrawShadowEx = function( ctx, loObj, loObjFrom )
     ++j
   }
 }
-

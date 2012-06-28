@@ -1,0 +1,47 @@
+<html>
+<head>
+<title>loEngine Shadow Testing</title>
+<script src="lo/loMath.src.js"></script>
+<script src="lo/loEngine.src.js"></script>
+<script src="lo/loEngineDisp.src.js"></script>
+<script type="application/javascript">
+	$ = function(e){ return document.getElementsByName(e)[0] || document.getElementById(e) }
+
+	function demoSetup()
+	{
+		var canvas = $('loDemo');
+		
+		if( !canvas )
+		{
+			console.log('Failed to get canvas!');
+			return;
+		}
+		
+		var ctx = canvas.getContext("2d");
+		var myPointLight = loCreatePointLight( 400, 0 );
+		var shape = loCreatePoly( 200, 200, 100, 12 );
+		shape.rotate( 5 )
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		// Reset styles
+		ctx.fillStyle = "#fff";
+		ctx.strokeStyle = "#000";
+
+		loDrawShadow( ctx, shape, myPointLight.pos, $('loOcc').checked ? 'o' : 's' )
+		
+		if( $('loDraw').checked )
+			loDraw( ctx, shape, '#888' );
+	}
+</script>
+</head>
+<body onload="demoSetup()">
+	<canvas id="loDemo" width="400" height="400">
+		Sorry, your browser doesn't support canvas technology
+	</canvas>
+	<div name="loMisc"></div>
+	<label><input name="loOcc" type=checkbox onclick="javascript:demoSetup();" checked> Occluded</label><br>
+	<label><input name="loDraw" type=checkbox onclick="javascript:demoSetup();" checked> Draw Shape</label><br>
+</body>
+ 
+</html>

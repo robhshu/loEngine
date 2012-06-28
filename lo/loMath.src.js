@@ -26,10 +26,11 @@ loAsRad = function( deg )
 /*
 	loRound
 		Round a number to 3SF
+    NEW: you can now specify the numbers after the decimal point
 */
-loRound = function( x )
+loRound = function( x, p )
 {
-	return Math.round( x * 1000 ) / 1000
+  return x.toFixed( p === undefined ? 3 : p )
 }
 
 /*
