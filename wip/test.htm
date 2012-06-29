@@ -1,0 +1,98 @@
+<html>
+<head>
+<title>loEngine Shadow Testing</title>
+<script src="lo/loMath.src.js"></script>
+<script src="lo/loEngine.src.js"></script>
+<script src="lo/loEngineDisp.src.js"></script>
+<script type="application/javascript">
+	$ = function(e){ return document.getElementsByName(e)[0] || document.getElementById(e) }
+	
+	_isActive = true
+	_shapeRot = 0
+	
+	ticks = 0
+	mean = 0
+	
+	function play()
+	{
+		_isActive = !( _isActive )
+		
+		if( _isActive ) demoSetup()
+	}
+	
+	function demoSetup()
+	{
+		var canvas = $('loDemo');
+		
+		if( !canvas )
+		{
+			console.log('Failed to get canvas!');
+			return;
+		}
+		
+		var ctx = canvas.getContext("2d");
+		var myPointLight = loCreatePointLight( 0, 200);
+		
+		var b4 = new Date().getTime()
+		
+		var shape = loCreatePoly( 200, 200, 100, 4 );
+		shape.rotate( _shapeRot )
+		_shapeRot += 3
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		// Reset styles
+		ctx.fillStyle = "#fff";
+		ctx.strokeStyle = "#000";
+
+		loDrawShadow( ctx, shape, myPointLight.pos, 's' )
+
+		if( $('loDraw').checked )
+			loDraw( ctx, shape, '#888' );
+		
+		ctx.beginPath()
+		
+		var i = 0;
+		while( i < 4 )
+		{
+			loWorldCaps[i][0].moveFrom( ctx )
+			loWorldCaps[i][1].lineFrom( ctx )
+			++i
+		}
+		
+		ctx.stroke()
+		
+		ctx.beginPath()
+		ctx.moveTo(0,0)
+		ctx.lineTo(400,0)
+		ctx.lineTo(400,400)
+		ctx.lineTo(0,400)
+		ctx.lineTo(0,0)
+		ctx.stroke()
+		
+		mean += (new Date().getTime() - b4)
+		++ticks
+		
+		if( ticks > 100 )
+		{
+			console.log('average time ' + (mean/100)+' ms (per frame)');
+			mean = 0;
+			ticks = 0
+		}
+		
+		if( _isActive )
+			setTimeout( "demoSetup()", 100 );
+	}
+</script>
+</head>
+<body onload="demoSetup()">
+	<canvas id="loDemo" width="400" height="400">
+		Sorry, your browser doesn't support canvas technology
+	</canvas>
+	<div name="loMisc"></div>
+	<label><input name="loControl" type=checkbox onclick="javascript:play();" checked> Pause</label><br>
+	<!--onclick="javascript:demoSetup();"-->
+	<label><input name="loDraw" type=checkbox checked> Draw Shape</label><br>
+</body>
+ 
+</html>

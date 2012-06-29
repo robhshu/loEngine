@@ -119,6 +119,15 @@ loVec2.prototype =
 		
 		return loAsDeg( Math.acos( d / ( this.length() * v.length() ) ) )
 	},
+  intersect: function( v )
+  {
+    var d = this.dot( v )
+    
+    if( d == 0 ) return;
+    
+    
+  
+  },
 	asPoint: function( )
 	{
 		return loPoint.create( this.i, this.j )
@@ -249,3 +258,34 @@ loOrigin = function( )
 {
 	return loPoint.create( 0, 0 )
 }
+
+/*
+  Intersection Libraries
+  
+  To help determining shadowing polygon
+*/
+
+/*
+  loIntersectLineLine
+  Adapted from http://www.kevlindev.com/gui/math/intersection/Intersection.js
+*/
+loIntersectLineLine = function(a1, a2, b1, b2)
+{
+  var ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
+  var ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x);
+  var u_b  = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
+
+  if( u_b != 0 )
+  {
+    var ua = ua_t / u_b;
+    var ub = ub_t / u_b;
+
+    if( 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1 )
+      return [true, loPoint.create( a1.x + ua * (a2.x - a1.x), a1.y + ua * (a2.y - a1.y) )]
+    else
+      return [false, 'No intersection']
+  }
+  else
+    // other cases not required in this library as rough locations are known
+    return [false, 'No single intersection']
+};
